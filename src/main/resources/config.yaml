@@ -18,5 +18,3 @@ server-type:
   demo: 'http://192.168.1.1:8083'
 #失败重跑最大次数
 max-retry-count: 3
-#extentreports配置文件路径
-extentreports-config-path: 'src/main/resources/extentreports.xml'
