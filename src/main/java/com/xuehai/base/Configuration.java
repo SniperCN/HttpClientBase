@@ -19,7 +19,7 @@ public class Configuration {
     /**
      * @description:    获取基本配置
      * @return java.util.Map<java.lang.String,java.lang.Object>
-     * @throws
+     * @throw
      * @author Sniper
      * @date 2019/4/19 10:06
      */
@@ -29,7 +29,7 @@ public class Configuration {
             String targetPath = System.getProperty("user.dir");
             List<String> configPathList = FileUtil.searchFiles(targetPath, "config.yaml");
             if (configPathList.size() < 1) {
-                throw new NullPointerException("未找到config.yaml配置文件");
+                throw new IllegalArgumentException("未找到config.yaml配置文件");
             } else if (configPathList.size() == 1) {
                 config = FileUtil.getYamlValue(configPathList.get(0));
             } else {

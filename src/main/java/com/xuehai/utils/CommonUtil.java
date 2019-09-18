@@ -169,7 +169,7 @@ public class CommonUtil {
      * @return          String
      * @throw
      * @author Sniper
-     * @date 2019/3/14 15:27 
+     * @date 2019/3/14 15:27
      */
     public static String format(StringBuilder target) {
         int index = target.lastIndexOf(",}");

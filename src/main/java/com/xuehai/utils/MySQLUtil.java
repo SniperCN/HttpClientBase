@@ -20,7 +20,7 @@ public class MySQLUtil {
 
     /**
      *
-     * @Description:                        数据库查询
+     * @description:                        数据库查询
      * @param dbSource						数据源
      * @param sql							sql语句
      * @return JSONArray	                返回json数组
@@ -53,7 +53,7 @@ public class MySQLUtil {
 
     /**
      *
-     * @Description:        数据库执行
+     * @description:        数据库执行
      * @param dbSource		数据源
      * @param sql			sql语句
      * @return void
@@ -75,11 +75,11 @@ public class MySQLUtil {
 
     /**
      *
-     * @Description:        连接数据库并返回
+     * @description:        连接数据库并返回
      * @param dbSource		数据源
      * @return Connection	返回数据库连接
      */
-    public static Connection getConnection(String dbSource) {
+    private static Connection getConnection(String dbSource) {
         Log.info(CLASS_NAME, "开始连接数据库,当前dbSource: {}", dbSource);
         try {
             if (conn==null || conn.isClosed()) {
@@ -101,11 +101,10 @@ public class MySQLUtil {
 
     /**
      *
-     * @Description:    关闭数据库连接
+     * @description:    关闭数据库连接
      * @return void
      */
-    @SuppressWarnings("Duplicates")
-    public static void closeConnection() {
+    private static void closeConnection() {
         try {
             if (rs != null) {
                 rs.close();

@@ -41,15 +41,19 @@ public class BaseTest {
     @BeforeClass
     protected void beforeBaseClass(ITestContext context) {
         Log.info(CLASS_NAME, "测试类{}开始执行", getClass());
-        Map casePathMap = (Map) Configuration.getConfig().get("case-path");
-        String suiteName = context.getSuite().getName();
-        Log.info(CLASS_NAME, "获取测试用例路径,当前SuiteName:{}", suiteName);
-        String casePath = (String) casePathMap.get(suiteName);
-        testCase = parseTestCase(casePath, getClass().getName());
-        Log.info(CLASS_NAME, "{}({})测试用例加载成功", testCase.getName(), getClass().getName());
-        if (client == null) {
-            client = HttpClientDispatch.getInstance();
+        Object casePathMap = Configuration.getConfig().get("case-path");
+        if (casePathMap != null) {
+            String suiteName = context.getSuite().getName();
+            Log.debug(CLASS_NAME, "获取测试用例路径,当前SuiteName:{}", suiteName);
+            String casePath = (String) ((Map)casePathMap).get(suiteName);
+            testCase = parseTestCase(casePath, getClass().getName());
+            if (client == null) {
+                client = HttpClientDispatch.getInstance();
+            }
+        } else {
+            throw new IllegalArgumentException("Configuration缺少case-path配置项");
         }
+
     }
 
     /**
@@ -122,8 +126,9 @@ public class BaseTest {
                 for (TestCase targetTestCase : testCases.toJavaList(TestCase.class)) {
                     testCase = targetTestCase;
                 }
+                Log.info(CLASS_NAME, "{}({})测试用例加载成功", testCase.getName(), className);
             } else {
-                throw new NullPointerException("测试用例加载失败,文件路径为空");
+                throw new IllegalArgumentException("测试用例加载失败,文件路径为空");
             }
         } catch (JSONException e) {
             Log.error(CLASS_NAME, "测试用例加载失败", e);
@@ -171,7 +176,7 @@ public class BaseTest {
                     AssertionUtil.assertion(actualResponse, expectResponse, assertion);
                 }
             } else {
-                throw new NullPointerException("用例断言失败,接口响应信息为空");
+                throw new IllegalArgumentException("用例断言失败,接口响应信息为空");
             }
         } catch (JSONException e) {
             Log.error(CLASS_NAME, "用例断言失败", e);

@@ -17,7 +17,7 @@ import java.util.List;
 public class AssertionUtil {
 
     /**
-     * @description:        通用部分字段断言方法
+     * @Description:        通用部分字段断言方法
      * @param actual        实际对象
      * @param except        预期对象
      * @param assertion     断言命令行对象
@@ -42,7 +42,7 @@ public class AssertionUtil {
     }
 
     /**
-     * @description:    通用部分字段断言方法
+     * @Description:    通用部分字段断言方法
      * @param actual    实际对象
      * @param except    预期对象
      * @param keys      断言字段
@@ -73,7 +73,7 @@ public class AssertionUtil {
     }
 
     /**
-     * @description:    通用全量数据断言
+     * @Description:    通用全量数据断言
      * @param actual    实际对象
      * @param except    预期对象
      * @param isSort    是否排序
@@ -105,7 +105,7 @@ public class AssertionUtil {
     }
 
     /**
-     * @description:    对象equals断言
+     * @Description:    对象equals断言
      * @param description   断言描述
      * @param actual        实际结果
      * @param expect        预期结果
@@ -122,7 +122,7 @@ public class AssertionUtil {
     }
 
     /**
-     * @description:        条件断言
+     * @Description:        条件断言
      * @param description   断言描述
      * @param condition     条件
      * @return void

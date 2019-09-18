@@ -190,11 +190,11 @@ public class MongoUtil {
 
     /**
      *
-     * @Description:            创建MongoClient实例
+     * @description:            创建MongoClient实例
      * @param dbSource			数据库连接数据源
      * @return MongoClient		返回MongoClient实例
      */
-    public static MongoDatabase getDatabase(String dbSource, String database) {
+    private static MongoDatabase getDatabase(String dbSource, String database) {
         Log.info(CLASS_NAME, "开始连接MongoDB,当前dbSource: {}", dbSource);
         JSONObject source = JSONObject.parseObject(dbSource);
         String host = source.getString("host");
@@ -217,10 +217,10 @@ public class MongoUtil {
 
     /**
      *
-     * @Description:    关闭Mongo数据库连接
+     * @description:    关闭Mongo数据库连接
      * @return void
      */
-    public static void closeMongoClient() {
+    private static void closeMongoClient() {
         if(mongoClient != null) {
             mongoClient.close();
             mongoClient = null;

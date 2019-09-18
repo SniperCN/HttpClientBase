@@ -180,7 +180,7 @@ public class FileUtil {
      */
     public static void deleteDirectory(File directory) throws IOException {
         if (directory == null) {
-            throw new IllegalArgumentException("directory can't be null");
+            throw new IllegalArgumentException("错误的参数:null");
         } else if (!directory.exists()) {
             throw new IllegalArgumentException("文件不存在,当前路径:" + directory.getAbsolutePath());
         } else {
@@ -202,7 +202,7 @@ public class FileUtil {
      */
     public static void delete(File file) throws IOException {
         if (file == null) {
-            throw new IllegalArgumentException("File can't be null");
+            throw new IllegalArgumentException("错误的参数:null");
         } else if (!file.exists()) {
             throw new IllegalArgumentException("文件不存在,当前路径:" + file.getAbsolutePath());
         } else {

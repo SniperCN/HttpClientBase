@@ -26,7 +26,7 @@ public class MockClient {
      * @param mockResponse      MockResponse实体
      * @param mockForward       MockForward实体
      * @return void
-     * @throws
+     * @throw
      * @author Sniper
      * @date 2019/4/26 15:06
      */
@@ -50,7 +50,7 @@ public class MockClient {
      * @param request       HttpRequest
      * @param response      HttpResponse
      * @return void
-     * @throws
+     * @throw
      * @author Sniper
      * @date 2019/4/26 15:08
      */
@@ -65,7 +65,7 @@ public class MockClient {
      * @param request       HttpRequest
      * @param forward       HttpForward
      * @return void
-     * @throws
+     * @throw
      * @author Sniper
      * @date 2019/4/26 15:15
      */
@@ -78,7 +78,7 @@ public class MockClient {
      * @description:        解析MockRequest实体
      * @param mockRequest
      * @return org.mockserver.model.HttpRequest
-     * @throws
+     * @throw
      * @author Sniper
      * @date 2019/4/26 15:16
      */
@@ -118,7 +118,7 @@ public class MockClient {
      * @description:            解析MockResponse实体
      * @param mockResponse
      * @return org.mockserver.model.HttpResponse
-     * @throws
+     * @throw
      * @author Sniper
      * @date 2019/4/26 15:17
      */
@@ -149,9 +149,9 @@ public class MockClient {
 
     /**
      * @description:        解析MockForward实体
-     * @param mockForward
+     * @param  mockForward
      * @return org.mockserver.model.HttpForward
-     * @throws
+     * @throw
      * @author Sniper
      * @date 2019/4/26 15:18
      */
@@ -187,7 +187,7 @@ public class MockClient {
      * @param host
      * @param port
      * @return org.mockserver.client.MockServerClient
-     * @throws
+     * @throw
      * @author Sniper
      * @date 2019/4/26 15:18
      */
@@ -199,10 +199,9 @@ public class MockClient {
     }
 
     /**
-    * @description:     关闭MockServerClient
-     * @param
+     * @description:     关闭MockServerClient
      * @return void
-     * @throws
+     * @throw
      * @author Sniper
      * @date 2019/4/26 15:18
      */
