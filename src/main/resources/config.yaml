@@ -1,0 +1,22 @@
+#协议
+protocol: 'http'
+#HttpClient RequestConfig设置
+http-client:
+  proxy:
+    host:
+    port:
+  socket-timeout: 5000
+  connect-timeout: 60000
+  connection-request-timeout: 5000
+db-source:
+  mongodb: '{"host":"192.168.5.28","port":50000,"userName":"readwrite_user","password":"readwrite_user","authDB":""}'
+mock-client:
+  host: '127.0.0.1'
+  port: 8090
+#服务的主机名和端口
+server-type:
+  demo: 'http://192.168.1.1:8083'
+#失败重跑最大次数
+max-retry-count: 3
+#extentreports配置文件路径
+extentreports-config-path: 'src/main/resources/extentreports.xml'

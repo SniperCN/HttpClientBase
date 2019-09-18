@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extentreports>
+    <configuration>
+        <!-- report theme -->
+        <!-- standard, dark -->
+        <theme>standard</theme>
+    
+        <!-- document encoding -->
+        <!-- defaults to UTF-8 -->
+        <encoding>UTF-8</encoding>
+        
+        <!-- protocol for script and stylesheets -->
+        <!-- defaults to https -->
+        <!--
+        --> 
+        <protocol>https</protocol>
+        
+        <!-- title of the document -->
+        <documentTitle>ApiTestReport</documentTitle>
+        
+        <!-- report name - displayed at top-nav -->
+        <reportName>ApiTestReport</reportName>
+        
+        <timeStampFormat>yyyy-MM-dd HH:mm:ss.SSS</timeStampFormat>
+        
+        <!-- custom javascript -->
+        <scripts>
+            <![CDATA[
+                var head = document.getElementsByTagName("head");
+				var link = document.createElement("link");
+				link.setAttribute("rel","icon");
+				link.setAttribute("href","http://extentreports.com/wp-content/uploads/2018/09/cropped-Extent_twitterprofilepicture_dark-32x32.jpg");
+				link.setAttribute("sizes","32x32");
+				head[0].appendChild(link);
+            ]]>
+        </scripts>
+        
+        <!-- custom styles -->
+        <styles>
+            <![CDATA[
+                
+            ]]>
+        </styles>
+    </configuration>
+</extentreports>
