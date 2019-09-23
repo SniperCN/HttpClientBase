@@ -1,4 +1,4 @@
-package com.xuehai.base;
+package com.xuehai.test.base;
 
 import org.testng.IAnnotationTransformer;
 import org.testng.IRetryAnalyzer;

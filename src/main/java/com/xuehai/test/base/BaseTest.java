@@ -1,21 +1,16 @@
-package com.xuehai.base;
+package com.xuehai.test.base;
 
 import com.alibaba.fastjson.*;
-import com.xuehai.model.Entity;
-import com.xuehai.model.MockDTO;
-import com.xuehai.model.TestCase;
-import com.xuehai.utils.AssertionUtil;
-import com.xuehai.utils.CommonUtil;
-import com.xuehai.utils.FileUtil;
+import com.xuehai.test.model.Entity;
+import com.xuehai.test.model.TestCase;
+import com.xuehai.test.utils.AssertionUtil;
+import com.xuehai.test.utils.FileUtil;
 import org.apache.commons.lang3.StringUtils;
-import org.mockserver.client.MockServerClient;
 import org.testng.ITestContext;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import java.io.IOException;
+
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static io.qameta.allure.Allure.*;
 

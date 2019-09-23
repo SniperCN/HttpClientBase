@@ -1,6 +1,6 @@
-package com.xuehai.utils;
+package com.xuehai.test.utils;
 
-import com.xuehai.base.Log;
+import com.xuehai.test.base.Log;
 import org.yaml.snakeyaml.Yaml;
 import java.io.*;
 import java.util.ArrayList;

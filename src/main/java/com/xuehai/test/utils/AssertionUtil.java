@@ -1,9 +1,9 @@
-package com.xuehai.utils;
+package com.xuehai.test.utils;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.JSONPath;
-import com.xuehai.base.Assertion;
+import com.xuehai.test.base.Assertion;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
 import java.util.List;

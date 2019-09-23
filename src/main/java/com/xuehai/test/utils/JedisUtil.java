@@ -1,4 +1,4 @@
-package com.xuehai.utils;
+package com.xuehai.test.utils;
 
 import redis.clients.jedis.BinaryClient;
 import redis.clients.jedis.Jedis;

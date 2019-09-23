@@ -1,8 +1,8 @@
-package com.xuehai.base;
+package com.xuehai.test.base;
 
-import com.xuehai.model.Entity;
-import com.xuehai.model.MockDTO;
-import com.xuehai.utils.CommonUtil;
+import com.xuehai.test.model.Entity;
+import com.xuehai.test.model.MockDTO;
+import com.xuehai.test.utils.CommonUtil;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;

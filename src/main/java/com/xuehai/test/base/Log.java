@@ -1,4 +1,4 @@
-package com.xuehai.base;
+package com.xuehai.test.base;
 
 import org.slf4j.LoggerFactory;
 

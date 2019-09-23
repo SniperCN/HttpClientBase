@@ -1,4 +1,4 @@
-package com.xuehai.model;
+package com.xuehai.test.model;
 
 import com.alibaba.fastjson.annotation.JSONField;
 import java.util.Objects;
