@@ -210,10 +210,12 @@ public class FileUtil {
                 File [] files = file.listFiles();
                 if (files != null) {
                     for (File f : files) {
-                        if (!f.delete()) {
-                            throw new IOException("文件删除失败,当前路径:" + f.getAbsolutePath());
-                        }
+                        delete(f);
                     }
+                }
+            } else {
+                if (!file.delete()) {
+                    throw new IOException("文件删除失败,当前路径:" + file.getAbsolutePath());
                 }
             }
         }
