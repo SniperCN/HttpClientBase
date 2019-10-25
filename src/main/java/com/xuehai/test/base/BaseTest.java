@@ -3,16 +3,12 @@ package com.xuehai.test.base;
 import com.alibaba.fastjson.*;
 import com.xuehai.test.model.Entity;
 import com.xuehai.test.model.TestCase;
-import com.xuehai.test.utils.AssertionUtil;
 import com.xuehai.test.utils.FileUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.testng.ITestContext;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-
 import java.util.*;
-
-import static io.qameta.allure.Allure.*;
 
 /**
  * @ClassName BaseTest
@@ -23,8 +19,12 @@ import static io.qameta.allure.Allure.*;
 public class BaseTest {
 
     private static final String CLASS_NAME = BaseTest.class.getName();
-    private static HttpClientDispatch client;
+    private static BaseClient baseClient;
     private TestCase testCase;
+
+    protected BaseClient getBaseClient() {
+        return baseClient;
+    }
 
     /**
      * @description:            初始化TestCase和HttpClient
@@ -42,8 +42,8 @@ public class BaseTest {
             Log.debug(CLASS_NAME, "获取测试用例路径,当前SuiteName:{}", suiteName);
             String casePath = (String) ((Map)casePathMap).get(suiteName);
             testCase = parseTestCase(casePath, getClass().getName());
-            if (client == null) {
-                client = HttpClientDispatch.getInstance();
+            if (baseClient == null) {
+                baseClient = BaseClient.getInstance();
             }
         } else {
             throw new IllegalArgumentException("Configuration缺少case-path配置项");
@@ -60,43 +60,6 @@ public class BaseTest {
     @AfterClass
     protected void afterBaseClass(){
         Log.info(CLASS_NAME, "测试类: {} 执行完毕", getClass());
-    }
-
-    /**
-     * @description:            发送http请求,并验证响应数据
-     * @param entity            请求实体
-     * @param assertionMap      测试类断言Map<String, AssertionHandler>
-     * @return void
-     * @author Sniper
-     * @date 2019/4/22 14:57
-     */
-    protected void sendHttpRequest(ITestContext context, Entity entity, HashMap<String, AssertionHandler> assertionMap) {
-        try {
-            assertion(sendHttpRequest(context, entity), assertionMap, new Assertion(entity.getAssertion()));
-        } catch (JSONException e) {
-            Log.error(CLASS_NAME, "测试用例断言失败,Assertion实例化出错", e);
-        }
-    }
-
-    /**
-     * @description:                发送http请求
-     * @param entity                请求实体
-     * @return java.lang.String
-     * @throws
-     * @author Sniper
-     * @date 2019/4/18 10:50
-     */
-    protected String sendHttpRequest(ITestContext context, Entity entity) {
-        JSONObject contextJson = new JSONObject();
-        Set<String> attrName = context.getAttributeNames();
-        for (String name : attrName) {
-            Object value  = context.getAttribute(name);
-            contextJson.put(name, value);
-        }
-        description(entity.getDescription());
-        parameter("ITestContext: ", contextJson.toJSONString());
-        parameter("Entity: ", JSON.toJSONString(entity));
-        return client.sendHttpRequest(context, entity);
     }
 
     /**
@@ -141,41 +104,10 @@ public class BaseTest {
      */
     protected Iterator<Object[]> initData() {
         List<Object[]> dataList = new ArrayList<>();
-        List<Map<String, Entity>> list = testCase.getEntityList();
+        List<Map<String, List<Entity>>> list = testCase.getEntityList();
         list.forEach(map -> dataList.add(new Object[]{map}));
         return dataList.iterator();
     }
 
-    /**
-     * @description:    响应断言
-     * @param responseDTO            实际响应数据
-     * @param assertionMap        断言Map<action名称, AssertionHandler实现类>
-     * @param assertion           断言数据
-     * @return void
-     * @throws
-     * @author Sniper
-     * @date 2019/4/19 10:03
-     */
-    protected void assertion(String responseDTO, HashMap<String, AssertionHandler> assertionMap, Assertion assertion) {
-        try {
-            if (responseDTO != null) {
-                JSONObject actualResponseDTO = JSONObject.parseObject(responseDTO);
-                AssertionUtil.assertion("ResponseCode校验", actualResponseDTO.getIntValue("responseCode"),
-                        assertion.responseCode());
-                Object actualResponse = actualResponseDTO.get("response");
-                String action = assertion.action();
-                if (!StringUtils.isEmpty(action)) {
-                    assertionMap.get(assertion.action()).assertion(actualResponse, assertion);
-                } else {
-                    Object expectResponse = assertion.response();
-                    AssertionUtil.assertion(actualResponse, expectResponse, assertion);
-                }
-            } else {
-                throw new IllegalArgumentException("用例断言失败,接口响应信息为空");
-            }
-        } catch (JSONException e) {
-            Log.error(CLASS_NAME, "用例断言失败", e);
-        }
-    }
 
 }

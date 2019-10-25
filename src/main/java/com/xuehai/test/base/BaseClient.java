@@ -3,6 +3,7 @@ package com.xuehai.test.base;
 import com.xuehai.test.model.Entity;
 import com.xuehai.test.model.MockDTO;
 import com.xuehai.test.utils.CommonUtil;
+import com.xuehai.test.utils.FileUtil;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -25,25 +26,24 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @ClassName HttpClientDispatch
+ * @ClassName BaseClient
  * @Description:    HttpClient客户端
  * @Author Sniper
  * @Date 2019/3/14 15:01
  */
-public class HttpClientDispatch {
-    private static final String CLASS_NAME = HttpClientDispatch.class.getName();
+public class BaseClient {
+    private static final String CLASS_NAME = BaseClient.class.getName();
     private static RequestConfig requestConfig;
-    private static HttpClientDispatch instance;
+    private static BaseClient instance;
 
-    public static HttpClientDispatch getInstance() {
+    public static BaseClient getInstance() {
         if (instance == null) {
-            instance = new HttpClientDispatch();
+            instance = new BaseClient();
             initRequestConfig();
         }
         return instance;
     }
 
-    @SuppressWarnings("unchecked")
     public static void initRequestConfig() {
         Map httpConfig = (Map) Configuration.getConfig().get("http-client");
         RequestConfig.Builder builder = RequestConfig.custom();
@@ -96,7 +96,7 @@ public class HttpClientDispatch {
                 String serverType = entity.getServerType();
                 String url = entity.getUrl();
                 Map<String, Object> urlParam = entity.getUrlParam();
-                String queryString = entity.getQueryString();
+                Map<String, Object> queryMap = entity.getQueryMap();
                 Map<String, String> header = entity.getHeader();
                 String requestBody = entity.getRequestBody();
                 String accessToken = entity.getAccessToken();
@@ -147,10 +147,10 @@ public class HttpClientDispatch {
                 }
 
                 if (isSign) {
-                    url = CommonUtil.createRequestSignature(method, url, queryString, requestBody, accessToken);
+                    url = CommonUtil.createRequestSignature(method, url, toQueryString(queryMap), requestBody, accessToken);
                 } else {
-                    if (queryString != null && !queryString.isEmpty()) {
-                        url = url + "?" + queryString;
+                    if (queryMap != null && queryMap.size() > 0) {
+                        url = url + "?" + toQueryString(queryMap);
                     }
                 }
 
@@ -197,39 +197,39 @@ public class HttpClientDispatch {
 
     public String sendHttpGet(String httpUrl)
             throws ParseException, IOException {
-        HttpRequestBase httpRequest = new HttpGet(httpUrl);
-        return sendHttpRequest(httpRequest, new HashMap<>());
+        HttpGet httpGet = new HttpGet(httpUrl);
+        return sendHttpRequest(httpGet, new HashMap<>());
     }
 
     public String sendHttpGet(String httpUrl, Map<String, String> header)
             throws ParseException, IOException {
-        HttpRequestBase httpRequest = new HttpGet(httpUrl);
-        return sendHttpRequest(httpRequest, header);
+        HttpGet httpGet = new HttpGet(httpUrl);
+        return sendHttpRequest(httpGet, header);
     }
 
     public String sendHttpPost(String httpUrl)
             throws ParseException, IOException {
-        HttpRequestBase httpRequest = new HttpPost(httpUrl);
-        return sendHttpRequest(httpRequest, new HashMap<>());
+        HttpPost httpPost = new HttpPost(httpUrl);
+        return sendHttpRequest(httpPost, new HashMap<>());
     }
 
     public String sendHttpPost(String httpUrl, Map<String, String> header)
             throws ParseException, IOException {
-        HttpRequestBase httpRequest = new HttpPost(httpUrl);
-        return sendHttpRequest(httpRequest, header);
+        HttpPost httpPost = new HttpPost(httpUrl);
+        return sendHttpRequest(httpPost, header);
     }
 
     public String sendHttpPost(String httpUrl, String body, Map<String, String> header)
             throws ParseException, IOException {
-        HttpRequestBase httpRequest = new HttpPost(httpUrl);
+        HttpPost httpPost = new HttpPost(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
-        ((HttpPost) httpRequest).setEntity(stringEntity);
-        return sendHttpRequest(httpRequest, header);
+        httpPost.setEntity(stringEntity);
+        return sendHttpRequest(httpPost, header);
     }
 
     public String sendHttpPost(String httpUrl, Map<String, File> map, Map<String, String> header)
             throws ParseException, IOException {
-        HttpRequestBase httpRequest = new HttpPost(httpUrl);
+        HttpPost httpPost = new HttpPost(httpUrl);
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();
         for(Map.Entry<String, File> entry : map.entrySet()){
             String key = entry.getKey();
@@ -238,83 +238,83 @@ public class HttpClientDispatch {
             builder.addPart(key, fileBody);
         }
         HttpEntity reqEntity = builder.build();
-        ((HttpPost) httpRequest).setEntity(reqEntity);
-        return sendHttpRequest(httpRequest, header);
+        httpPost.setEntity(reqEntity);
+        return sendHttpRequest(httpPost, header);
     }
 
     public String sendHttpDelete(String httpUrl)
             throws ParseException, IOException {
-        HttpRequestBase httpRequest = new HttpDelete(httpUrl);
-        return sendHttpRequest(httpRequest, new HashMap<>());
+        HttpDelete httpDelete = new HttpDelete(httpUrl);
+        return sendHttpRequest(httpDelete, new HashMap<>());
     }
 
     public String sendHttpDelete(String httpUrl, Map<String, String> header)
             throws ParseException, IOException {
-        HttpRequestBase httpRequest = new HttpDelete(httpUrl);
-        return sendHttpRequest(httpRequest, header);
+        HttpDelete httpDelete = new HttpDelete(httpUrl);
+        return sendHttpRequest(httpDelete, header);
     }
 
     public String sendHttpDelete(String httpUrl, String body, Map<String, String> header)
             throws ParseException, IOException {
-        HttpRequestBase httpRequest = new HttpDelete(httpUrl);
+        HttpDelete httpDelete = new HttpDelete(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
-        ((HttpDelete) httpRequest).setEntity(stringEntity);
-        return sendHttpRequest(httpRequest, header);
+        httpDelete.setEntity(stringEntity);
+        return sendHttpRequest(httpDelete, header);
     }
 
 
 
     public String sendHttpPut(String httpUrl)
             throws ParseException, IOException {
-        HttpRequestBase httpPut = new HttpPut(httpUrl);
+        HttpPut httpPut = new HttpPut(httpUrl);
         return sendHttpRequest(httpPut, new HashMap<>());
     }
 
     public String sendHttpPut(String httpUrl, Map<String, String> header)
             throws ParseException, IOException {
-        HttpRequestBase httpPut = new HttpPut(httpUrl);
+        HttpPut httpPut = new HttpPut(httpUrl);
         return sendHttpRequest(httpPut, header);
     }
 
     public String sendHttpPut(String httpUrl, String body, Map<String, String> header)
             throws ParseException, IOException {
-        HttpRequestBase httpPut = new HttpPut(httpUrl);
+        HttpPut httpPut = new HttpPut(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
-        ((HttpPut) httpPut).setEntity(stringEntity);
+        httpPut.setEntity(stringEntity);
         return sendHttpRequest(httpPut, header);
     }
 
     public String sendHttpPatch(String httpUrl)
             throws ParseException, IOException {
-        HttpRequestBase httpRequest = new HttpPatch(httpUrl);
-        return sendHttpRequest(httpRequest, new HashMap<>());
+        HttpPatch httpPatch = new HttpPatch(httpUrl);
+        return sendHttpRequest(httpPatch, new HashMap<>());
     }
 
     public String sendHttpPatch(String httpUrl, Map<String, String> header)
             throws ParseException, IOException {
-        HttpRequestBase httpRequest = new HttpPatch(httpUrl);
-        return sendHttpRequest(httpRequest, header);
+        HttpPatch httpPatch = new HttpPatch(httpUrl);
+        return sendHttpRequest(httpPatch, header);
     }
 
     public String sendHttpPatch(String httpUrl, String body, Map<String, String> header)
             throws ParseException, IOException {
-        HttpRequestBase httpRequest = new HttpPatch(httpUrl);
+        HttpPatch httpPatch = new HttpPatch(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
-        ((HttpPatch) httpRequest).setEntity(stringEntity);
-        return sendHttpRequest(httpRequest, header);
+        httpPatch.setEntity(stringEntity);
+        return sendHttpRequest(httpPatch, header);
     }
 
     private String sendHttpRequest(HttpRequestBase httpRequest, Map<String, String> header)
             throws ParseException, IOException{
         CloseableHttpClient httpClient = null;
         CloseableHttpResponse response = null;
-        String responseInfo = null;
+        String responseInfo;
         try {
             httpClient = HttpClients.createDefault();
             httpRequest.setConfig(requestConfig);
             for(Map.Entry<String, String> entry: header.entrySet()){
                 String key=entry.getKey();
-                String value=entry.getValue().toString();
+                String value=entry.getValue();
                 httpRequest.setHeader(key, value);
             }
             String requestInfo = getRequestInfo(httpRequest);
@@ -350,7 +350,32 @@ public class HttpClientDispatch {
         return responseInfo;
     }
 
-    private static String getRequestInfo(HttpRequestBase request) {
+    public void download(String httpUrl, String savePath)
+            throws ParseException, IOException{
+        CloseableHttpClient httpClient = null;
+        CloseableHttpResponse response = null;
+        try {
+            httpClient = HttpClients.createDefault();
+            HttpGet httpGet = new HttpGet(httpUrl);
+            httpGet.setConfig(requestConfig);
+            String requestInfo = getRequestInfo(httpGet);
+            Log.info(CLASS_NAME, "请求信息: " + requestInfo);
+            response = httpClient.execute(httpGet);
+            HttpEntity httpEntity = response.getEntity();
+            if (httpEntity != null) {
+                FileUtil.write(httpEntity.getContent(), savePath);
+            }
+        } finally {
+            if (response != null) {
+                response.close();
+            }
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+    }
+
+    private String getRequestInfo(HttpRequestBase request) {
         StringBuilder sb = new StringBuilder("{\"url\":\"");
         String url = request.getRequestLine().getUri();
         String method = request.getRequestLine().getMethod();
@@ -364,7 +389,7 @@ public class HttpClientDispatch {
         return CommonUtil.format(sb);
     }
 
-    private static String getResponseInfo(CloseableHttpResponse response)
+    private String getResponseInfo(CloseableHttpResponse response)
             throws ParseException, IOException {
         StringBuilder sb = new StringBuilder("{\"responseCode\":");
         int responseCode = response.getStatusLine().getStatusCode();
@@ -388,7 +413,7 @@ public class HttpClientDispatch {
         return CommonUtil.format(sb);
     }
 
-    private static String getFullInfo(String requestInfo, String bodyInfo, String responseInfo) {
+    private String getFullInfo(String requestInfo, String bodyInfo, String responseInfo) {
         StringBuilder sb = new StringBuilder();
         sb.append("{\"requestDTO\":")
                 .append(requestInfo)
@@ -414,13 +439,21 @@ public class HttpClientDispatch {
         return sb.toString();
     }
 
-    private static String format(String target) {
+    private String format(String target) {
         if (target != null) {
             if (!target.startsWith("{") && !target.startsWith("[")) {
                 return "\"" + target + "\"";
             }
         }
         return target;
+    }
+
+    private String toQueryString(Map<String, Object> map) {
+        StringBuilder stringBuilder = new StringBuilder();
+        map.forEach((key, value) -> stringBuilder.append(key).append("=").append(value).append("&"));
+        int lastIndex = stringBuilder.lastIndexOf("&");
+        stringBuilder.replace(lastIndex, lastIndex + 1, "");
+        return stringBuilder.toString();
     }
 
 }

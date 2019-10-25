@@ -1,5 +1,7 @@
 package com.xuehai.test.base;
 
+import com.xuehai.test.model.Entity;
+
 /**
  * @ClassName AssertionHandler
  * @Description:    断言处理器
@@ -8,6 +10,6 @@ package com.xuehai.test.base;
  */
 public abstract class AssertionHandler {
 
-    public abstract void assertion(Object response, Assertion assertion);
+    public abstract void assertion(Object response, Entity entity);
 
 }

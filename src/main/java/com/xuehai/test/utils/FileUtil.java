@@ -26,7 +26,6 @@ public class FileUtil {
      * @author Sniper
      * @date 2019/4/23 12:58
      */
-    @SuppressWarnings("Duplicates")
     public static List<String> readLine(String filePath, String charset) {
         List<String> list = new ArrayList<>();
         FileInputStream fileInputStream = null;
@@ -68,7 +67,6 @@ public class FileUtil {
      * @author Sniper
      * @date 2019/3/14 10:25
      */
-    @SuppressWarnings("Duplicates")
     public static String read(String filePath, String charset) {
         StringBuilder temp = new StringBuilder();
         FileInputStream fileInputStream = null;
@@ -128,6 +126,25 @@ public class FileUtil {
             Log.error(CLASS_NAME, "yaml读取失败", e);
         }
         return map;
+    }
+
+    public static void write(InputStream is, String savePath) {
+        FileOutputStream out = null;
+        try{
+            try {
+                out = new FileOutputStream(new File(savePath));
+                int temp;
+                while ((temp = is.read()) != -1) {
+                    out.write(temp);
+                }
+
+            } finally {
+                if (out != null)
+                    out.close();
+            }
+        } catch (IOException e) {
+            Log.error(CLASS_NAME, "文件写入失败", e);
+        }
     }
 
     /**
