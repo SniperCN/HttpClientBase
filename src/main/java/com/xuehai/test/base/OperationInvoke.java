@@ -16,7 +16,7 @@ import java.util.*;
 public class OperationInvoke {
     private static final String CLASS_NAME = OperationInvoke.class.getName();
 
-    public static List<String> operationIterators(String className, String methodName, BaseClient baseClient, ITestContext iTestContext,
+    public static List<String> operationIterator(String className, String methodName, BaseClient baseClient, ITestContext iTestContext,
                                           Map<String, List<Entity>> map, HashMap<String, AssertionHandler> assertionMap) {
         List<String> list = new ArrayList<>();
         try {
