@@ -4,7 +4,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @ClassName Log
- * @Description: slf4j结合log4j2
+ * @Description: 日志模块
  * @Author Sniper
  * @Date 2019/3/13 10:53
  */

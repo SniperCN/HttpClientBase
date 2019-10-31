@@ -4,11 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.xuehai.test.model.Entity;
+import com.xuehai.test.model.Response;
 import com.xuehai.test.utils.AssertionUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.testng.ITestContext;
-
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Set;
 import static io.qameta.allure.Allure.description;
@@ -50,7 +49,7 @@ public class CommonOperation {
      * @author Sniper
      * @date 2019/10/9 14:13
      */
-    protected String sendHttpRequest(ITestContext context, Entity entity) {
+    protected Response sendHttpRequest(ITestContext context, Entity entity) {
         JSONObject contextJson = new JSONObject();
         Set<String> attrName = context.getAttributeNames();
         for (String name : attrName) {
@@ -64,16 +63,12 @@ public class CommonOperation {
     }
 
     protected void download(String httpUrl, String savePath) {
-        try {
-            baseClient.download(httpUrl, savePath);
-        } catch (IOException e) {
-            Log.error(CLASS_NAME, "资源下载保存失败", e);
-        }
+        baseClient.download(httpUrl, savePath);
     }
 
     /**
      * @description: 响应code断言,入库断言
-     * @param responseDTO         实际响应数据
+     * @param response            response实体
      * @param assertionMap        断言Map<action名称, AssertionHandler实现类>
      * @param entity              请求实体
      * @return void
@@ -81,16 +76,18 @@ public class CommonOperation {
      * @author Sniper
      * @date 2019/10/17 17:01 
      */ 
-    protected void assertion(String responseDTO, HashMap<String, AssertionHandler> assertionMap, Entity entity) {
+    protected void assertion(Response response, HashMap<String, AssertionHandler> assertionMap, Entity entity) {
         try {
-            Assertion assertion = new Assertion(entity.getAssertion());
-            if (responseDTO != null) {
-                JSONObject actualResponseDTO = JSONObject.parseObject(responseDTO);
-                AssertionUtil.assertion("ResponseCode校验", actualResponseDTO.getIntValue("responseCode"),
-                        assertion.responseCode());
+            if (response != null) {
+                Assertion assertion = new Assertion(entity.getAssertion());
+                AssertionUtil.assertion("StatusCode校验", response.getStatusCode(),
+                        assertion.statusCode());
+                JSONObject actualResponseDTO = JSONObject.parseObject(JSON.toJSONString(response.getResponseDTO()));
                 String action = assertion.action();
                 if (!StringUtils.isEmpty(action)) {
                     assertionMap.get(assertion.action()).assertion(actualResponseDTO, entity);
+                } else {
+                    AssertionUtil.assertion(actualResponseDTO, assertion);
                 }
             } else {
                 throw new IllegalArgumentException("用例断言失败,接口响应信息为空");

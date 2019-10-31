@@ -23,12 +23,12 @@ public class Assertion {
         return assertion.getString("action");
     }
 
-    public int responseCode() throws JSONException {
-        return assertion.getIntValue("responseCode");
+    public int statusCode() throws JSONException {
+        return assertion.getIntValue("statusCode");
     }
 
-    public Object response() throws JSONException {
-        return assertion.get("response");
+    public Object responseDTO() throws JSONException {
+        return assertion.get("responseDTO");
     }
 
     public String jsonPath() throws JSONException {

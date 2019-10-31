@@ -1,13 +1,13 @@
 package com.xuehai.test.base;
 
-import com.xuehai.test.model.Entity;
-import com.xuehai.test.model.MockDTO;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.xuehai.test.model.*;
 import com.xuehai.test.utils.CommonUtil;
 import com.xuehai.test.utils.FileUtil;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
-import org.apache.http.ParseException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
 import org.apache.http.entity.StringEntity;
@@ -87,148 +87,138 @@ public class BaseClient {
      * @author Sniper
      * @date 2019/4/18 10:50
      */
-    public String sendHttpRequest(ITestContext context, Entity entity) {
-        String response = null;
+    public Response sendHttpRequest(ITestContext context, Entity entity) {
+        Response response;
         MockServerClient mockServerClient = null;
         try {
-            try {
-                String method = entity.getMethod();
-                String serverType = entity.getServerType();
-                String url = entity.getUrl();
-                Map<String, Object> urlParam = entity.getUrlParam();
-                Map<String, Object> queryMap = entity.getQueryMap();
-                Map<String, String> header = entity.getHeader();
-                String requestBody = entity.getRequestBody();
-                String accessToken = entity.getAccessToken();
-                boolean isSign = entity.isSign();
-                boolean isMock = entity.isMock();
+            String method = entity.getMethod();
+            String serverType = entity.getServerType();
+            String url = entity.getUrl();
+            Map<String, Object> urlParam = entity.getUrlParam();
+            Map<String, Object> queryMap = entity.getQueryMap();
+            Map<String, String> header = entity.getHeader();
+            String requestBody = entity.getRequestBody();
+            String accessToken = entity.getAccessToken();
+            boolean isSign = entity.isSign();
+            boolean isMock = entity.isMock();
 
-                Map serverTypeMap = (Map) Configuration.getConfig().get("server-type");
-                if(serverTypeMap != null) {
-                    String host = (String) serverTypeMap.get(serverType);
-                    url = host + url;
-                } else {
-                    throw new NullPointerException("config.yaml缺少serverType配置");
-                }
+            Map serverTypeMap = (Map) Configuration.getConfig().get("server-type");
+            if(serverTypeMap != null) {
+                String host = (String) serverTypeMap.get(serverType);
+                url = host + url;
+            } else {
+                throw new IllegalArgumentException("config.yaml缺少serverType配置");
+            }
 
-                String protocol = (String) Configuration.getConfig().get("protocol");
-                if (protocol != null) {
-                    if ("http".equals(protocol)) {
-                        if (!url.startsWith("http://")) {
-                            url = "http://" + url;
-                        }
-                    } else if ("https".equals(protocol)) {
-                        if (!url.startsWith("https://")) {
-                            url = "https://" + url;
-                        }
-                    } else {
-                        throw new IllegalArgumentException("错误的协议配置");
+            String protocol = (String) Configuration.getConfig().get("protocol");
+            if (protocol != null) {
+                if ("http".equals(protocol)) {
+                    if (!url.startsWith("http://")) {
+                        url = "http://" + url;
+                    }
+                } else if ("https".equals(protocol)) {
+                    if (!url.startsWith("https://")) {
+                        url = "https://" + url;
                     }
                 } else {
-                    throw new NullPointerException("config.yaml缺少protocol配置");
+                    throw new IllegalArgumentException("错误的协议配置");
                 }
+            } else {
+                throw new IllegalArgumentException("config.yaml缺少protocol配置");
+            }
 
-                Pattern pattern = Pattern.compile("\\{.+?}");
-                Matcher matcher = pattern.matcher(url);
-                while (matcher.find()) {
-                    String temp = matcher.group();
-                    String dataKey = temp.replace("{", "").replace("}", "");
-                    if (urlParam != null && urlParam.size() > 0) {
-                        Object value = urlParam.get(dataKey);
-                        if (value != null && !"".equals(value)) {
-                            url = url.replace(temp, String.valueOf(value));
-                        }
-                    } else {
-                        Object obj = context.getAttribute("caseTempDataMap");
-                        if (obj != null) {
-                            url = url.replace(temp, String.valueOf(context.getAttribute(dataKey)));
-                        }
+            Pattern pattern = Pattern.compile("\\{.+?}");
+            Matcher matcher = pattern.matcher(url);
+            while (matcher.find()) {
+                String temp = matcher.group();
+                String dataKey = temp.replace("{", "").replace("}", "");
+                if (urlParam != null && urlParam.size() > 0) {
+                    Object value = urlParam.get(dataKey);
+                    if (value != null && !"".equals(value)) {
+                        url = url.replace(temp, String.valueOf(value));
                     }
-                }
-
-                if (isSign) {
-                    url = CommonUtil.createRequestSignature(method, url, toQueryString(queryMap), requestBody, accessToken);
                 } else {
-                    if (queryMap != null && queryMap.size() > 0) {
-                        url = url + "?" + toQueryString(queryMap);
+                    Object obj = context.getAttribute("caseTempDataMap");
+                    if (obj != null) {
+                        url = url.replace(temp, String.valueOf(context.getAttribute(dataKey)));
                     }
-                }
-
-                if (isMock) {
-                    MockClient mockClient = new MockClient();
-                    Map mockClientConfig = (Map) Configuration.getConfig().get("mock-client");
-                    String host = (String) mockClientConfig.get("host");
-                    int port = (int) mockClientConfig.get("port");
-                    mockServerClient = mockClient.start(host, port);
-                    MockDTO mockDTO = entity.getMockDTO();
-                    mockClient.doMock(mockServerClient, mockDTO.getMockRequest(), mockDTO.getMockResponse(),
-                            mockDTO.getMockForward());
-                }
-
-                switch (method.toUpperCase()) {
-                    case "GET":
-                        response = sendHttpGet(url, header);
-                        break;
-                    case "POST":
-                        response = sendHttpPost(url, requestBody, header);
-                        break;
-                    case "PUT":
-                        response = sendHttpPut(url, requestBody, header);
-                        break;
-                    case "DELETE":
-                        response = sendHttpDelete(url, requestBody, header);
-                        break;
-                    case "PATCH":
-                        response = sendHttpPatch(url, requestBody, header);
-                        break;
-                    default:
-                        throw new IllegalArgumentException("无效的Method: " + method);
-                }
-            } finally {
-                if (mockServerClient != null ) {
-                    mockServerClient.close();
                 }
             }
-        } catch (IOException e) {
-            Log.error(CLASS_NAME, "请求出错", e);
+
+            if (isSign) {
+                url = CommonUtil.createRequestSignature(method, url, toQueryString(queryMap), requestBody, accessToken);
+            } else {
+                if (queryMap != null && queryMap.size() > 0) {
+                    url = url + "?" + toQueryString(queryMap);
+                }
+            }
+
+            if (isMock) {
+                MockClient mockClient = new MockClient();
+                Map mockClientConfig = (Map) Configuration.getConfig().get("mock-client");
+                String host = (String) mockClientConfig.get("host");
+                int port = (int) mockClientConfig.get("port");
+                mockServerClient = mockClient.start(host, port);
+                MockDTO mockDTO = entity.getMockDTO();
+                mockClient.doMock(mockServerClient, mockDTO.getMockRequest(), mockDTO.getMockResponse(),
+                        mockDTO.getMockForward());
+            }
+
+            switch (method.toUpperCase()) {
+                case "GET":
+                    response = sendHttpGet(url, header);
+                    break;
+                case "POST":
+                    response = sendHttpPost(url, requestBody, header);
+                    break;
+                case "PUT":
+                    response = sendHttpPut(url, requestBody, header);
+                    break;
+                case "DELETE":
+                    response = sendHttpDelete(url, requestBody, header);
+                    break;
+                case "PATCH":
+                    response = sendHttpPatch(url, requestBody, header);
+                    break;
+                default:
+                    throw new IllegalArgumentException("未定义的Method类型: " + method);
+            }
+        } finally {
+            if (mockServerClient != null ) {
+                mockServerClient.close();
+            }
         }
         return response;
     }
 
-    public String sendHttpGet(String httpUrl)
-            throws ParseException, IOException {
+    public Response sendHttpGet(String httpUrl) {
         HttpGet httpGet = new HttpGet(httpUrl);
         return sendHttpRequest(httpGet, new HashMap<>());
     }
 
-    public String sendHttpGet(String httpUrl, Map<String, String> header)
-            throws ParseException, IOException {
+    public Response sendHttpGet(String httpUrl, Map<String, String> header) {
         HttpGet httpGet = new HttpGet(httpUrl);
         return sendHttpRequest(httpGet, header);
     }
 
-    public String sendHttpPost(String httpUrl)
-            throws ParseException, IOException {
+    public Response sendHttpPost(String httpUrl) {
         HttpPost httpPost = new HttpPost(httpUrl);
         return sendHttpRequest(httpPost, new HashMap<>());
     }
 
-    public String sendHttpPost(String httpUrl, Map<String, String> header)
-            throws ParseException, IOException {
+    public Response sendHttpPost(String httpUrl, Map<String, String> header) {
         HttpPost httpPost = new HttpPost(httpUrl);
         return sendHttpRequest(httpPost, header);
     }
 
-    public String sendHttpPost(String httpUrl, String body, Map<String, String> header)
-            throws ParseException, IOException {
+    public Response sendHttpPost(String httpUrl, String body, Map<String, String> header) {
         HttpPost httpPost = new HttpPost(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
         httpPost.setEntity(stringEntity);
         return sendHttpRequest(httpPost, header);
     }
 
-    public String sendHttpPost(String httpUrl, Map<String, File> map, Map<String, String> header)
-            throws ParseException, IOException {
+    public Response sendHttpPost(String httpUrl, Map<String, File> map, Map<String, String> header) {
         HttpPost httpPost = new HttpPost(httpUrl);
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();
         for(Map.Entry<String, File> entry : map.entrySet()){
@@ -242,20 +232,17 @@ public class BaseClient {
         return sendHttpRequest(httpPost, header);
     }
 
-    public String sendHttpDelete(String httpUrl)
-            throws ParseException, IOException {
+    public Response sendHttpDelete(String httpUrl) {
         HttpDelete httpDelete = new HttpDelete(httpUrl);
         return sendHttpRequest(httpDelete, new HashMap<>());
     }
 
-    public String sendHttpDelete(String httpUrl, Map<String, String> header)
-            throws ParseException, IOException {
+    public Response sendHttpDelete(String httpUrl, Map<String, String> header) {
         HttpDelete httpDelete = new HttpDelete(httpUrl);
         return sendHttpRequest(httpDelete, header);
     }
 
-    public String sendHttpDelete(String httpUrl, String body, Map<String, String> header)
-            throws ParseException, IOException {
+    public Response sendHttpDelete(String httpUrl, String body, Map<String, String> header) {
         HttpDelete httpDelete = new HttpDelete(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
         httpDelete.setEntity(stringEntity);
@@ -264,51 +251,44 @@ public class BaseClient {
 
 
 
-    public String sendHttpPut(String httpUrl)
-            throws ParseException, IOException {
+    public Response sendHttpPut(String httpUrl) {
         HttpPut httpPut = new HttpPut(httpUrl);
         return sendHttpRequest(httpPut, new HashMap<>());
     }
 
-    public String sendHttpPut(String httpUrl, Map<String, String> header)
-            throws ParseException, IOException {
+    public Response sendHttpPut(String httpUrl, Map<String, String> header) {
         HttpPut httpPut = new HttpPut(httpUrl);
         return sendHttpRequest(httpPut, header);
     }
 
-    public String sendHttpPut(String httpUrl, String body, Map<String, String> header)
-            throws ParseException, IOException {
+    public Response sendHttpPut(String httpUrl, String body, Map<String, String> header) {
         HttpPut httpPut = new HttpPut(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
         httpPut.setEntity(stringEntity);
         return sendHttpRequest(httpPut, header);
     }
 
-    public String sendHttpPatch(String httpUrl)
-            throws ParseException, IOException {
+    public Response sendHttpPatch(String httpUrl) {
         HttpPatch httpPatch = new HttpPatch(httpUrl);
         return sendHttpRequest(httpPatch, new HashMap<>());
     }
 
-    public String sendHttpPatch(String httpUrl, Map<String, String> header)
-            throws ParseException, IOException {
+    public Response sendHttpPatch(String httpUrl, Map<String, String> header) {
         HttpPatch httpPatch = new HttpPatch(httpUrl);
         return sendHttpRequest(httpPatch, header);
     }
 
-    public String sendHttpPatch(String httpUrl, String body, Map<String, String> header)
-            throws ParseException, IOException {
+    public Response sendHttpPatch(String httpUrl, String body, Map<String, String> header) {
         HttpPatch httpPatch = new HttpPatch(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
         httpPatch.setEntity(stringEntity);
         return sendHttpRequest(httpPatch, header);
     }
 
-    private String sendHttpRequest(HttpRequestBase httpRequest, Map<String, String> header)
-            throws ParseException, IOException{
+    private Response sendHttpRequest(HttpRequestBase httpRequest, Map<String, String> header) {
         CloseableHttpClient httpClient = null;
-        CloseableHttpResponse response = null;
-        String responseInfo;
+        CloseableHttpResponse httpResponse = null;
+        Response response;
         try {
             httpClient = HttpClients.createDefault();
             httpRequest.setConfig(requestConfig);
@@ -317,8 +297,6 @@ public class BaseClient {
                 String value=entry.getValue();
                 httpRequest.setHeader(key, value);
             }
-            String requestInfo = getRequestInfo(httpRequest);
-            Log.info(CLASS_NAME, "请求信息: " + requestInfo);
             String bodyInfo = null;
             HttpEntity httpEntity = null;
             if (httpRequest instanceof HttpPost) {
@@ -333,119 +311,71 @@ public class BaseClient {
             if (httpEntity != null) {
                 bodyInfo = EntityUtils.toString(httpEntity);
             }
-            Log.info(CLASS_NAME, "请求Body信息: " + bodyInfo);
-            response = httpClient.execute(httpRequest);
-            responseInfo = getResponseInfo(response);
-            Log.info(CLASS_NAME, "响应信息: " + responseInfo);
-            String fullInfo = getFullInfo(requestInfo, bodyInfo, responseInfo);
-            Log.info(CLASS_NAME, "接口请求/响应信息: " + fullInfo);
+            Request request = new Request(httpRequest.getRequestLine().getUri(), httpRequest.getMethod(),
+                    parseHeader(httpRequest.getAllHeaders()), bodyInfo);
+            Log.info(CLASS_NAME, "请求信息: {}", JSON.toJSONString(request, SerializerFeature.WriteMapNullValue));
+            httpResponse = httpClient.execute(httpRequest);
+            ResponseDTO responseDTO = JSON.toJavaObject(JSON.parseObject(EntityUtils.toString(httpResponse.getEntity(), "UTF-8")),
+                    ResponseDTO.class);
+            response = new Response(httpResponse.getStatusLine().getStatusCode(), httpResponse.getStatusLine().getReasonPhrase(),
+                    parseHeader(httpResponse.getAllHeaders()), false, responseDTO);
+            Log.info(CLASS_NAME, "响应信息: {}", JSON.toJSONString(response, SerializerFeature.WriteMapNullValue));
+        } catch (IOException e) {
+            response = new Response(0, e.getMessage(), null, true, null);
+            Log.error(CLASS_NAME, "请求失败", e);
+
         } finally {
-            if (response != null) {
-                response.close();
-            }
-            if (httpClient != null) {
-                httpClient.close();
+            try {
+                if (httpResponse != null) {
+                    httpResponse.close();
+                }
+                if (httpClient != null) {
+                    httpClient.close();
+                }
+            }catch (IOException e) {
+                Log.error(CLASS_NAME, "httpClient连接关闭失败", e);
             }
         }
-        return responseInfo;
+        return response;
     }
 
-    public void download(String httpUrl, String savePath)
-            throws ParseException, IOException{
+    public void download(String httpUrl, String savePath) {
         CloseableHttpClient httpClient = null;
         CloseableHttpResponse response = null;
         try {
             httpClient = HttpClients.createDefault();
             HttpGet httpGet = new HttpGet(httpUrl);
             httpGet.setConfig(requestConfig);
-            String requestInfo = getRequestInfo(httpGet);
-            Log.info(CLASS_NAME, "请求信息: " + requestInfo);
+            Request request = new Request(httpGet.getRequestLine().getUri(), httpGet.getMethod(),
+                    parseHeader(httpGet.getAllHeaders()), null);
+            Log.info(CLASS_NAME, "请求信息: {}", JSON.toJSONString(request, SerializerFeature.WriteMapNullValue));
             response = httpClient.execute(httpGet);
             HttpEntity httpEntity = response.getEntity();
             if (httpEntity != null) {
                 FileUtil.write(httpEntity.getContent(), savePath);
             }
+        } catch (IOException e) {
+            Log.error(CLASS_NAME, "下载失败", e);
         } finally {
-            if (response != null) {
-                response.close();
-            }
-            if (httpClient != null) {
-                httpClient.close();
+            try {
+                if (response != null) {
+                    response.close();
+                }
+                if (httpClient != null) {
+                    httpClient.close();
+                }
+            } catch (IOException e) {
+                Log.error(CLASS_NAME, "httpClient连接关闭失败", e);
             }
         }
     }
 
-    private String getRequestInfo(HttpRequestBase request) {
-        StringBuilder sb = new StringBuilder("{\"url\":\"");
-        String url = request.getRequestLine().getUri();
-        String method = request.getRequestLine().getMethod();
-        sb.append(url)
-                .append("\",\"method\":\"")
-                .append(method)
-                .append("\",")
-                .append("\"requestHeader\":{")
-                .append(parseHeader(request.getAllHeaders()))
-                .append("}}");
-        return CommonUtil.format(sb);
-    }
-
-    private String getResponseInfo(CloseableHttpResponse response)
-            throws ParseException, IOException {
-        StringBuilder sb = new StringBuilder("{\"responseCode\":");
-        int responseCode = response.getStatusLine().getStatusCode();
-        String responseMessage = response.getStatusLine().getReasonPhrase();
-        sb.append(responseCode)
-                .append(",")
-                .append("\"responseMessage\":\"")
-                .append(responseMessage)
-                .append("\",\"responseHeader\":{")
-                .append(parseHeader(response.getAllHeaders()))
-                .append("},\"response\":");
-        HttpEntity responseEntity = response.getEntity();
-        String responseInfo = null;
-        if (responseEntity != null) {
-            responseInfo = EntityUtils.toString(responseEntity, "UTF-8");
-            if ("".equals(responseInfo))
-                responseInfo = "\"\"";
-        }
-        sb.append(format(responseInfo))
-                .append("}");
-        return CommonUtil.format(sb);
-    }
-
-    private String getFullInfo(String requestInfo, String bodyInfo, String responseInfo) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{\"requestDTO\":")
-                .append(requestInfo)
-                .append(",\"bodyDTO\":")
-                .append(format(bodyInfo))
-                .append(",\"responseDTO\":")
-                .append(format(responseInfo))
-                .append("}");
-        return sb.toString();
-    }
-
-    private static String parseHeader(Header[] headers) {
-        StringBuilder sb = new StringBuilder();
+    private static Map<String, String> parseHeader(Header[] headers) {
+        Map<String, String> headerMap = new HashMap<>();
         for (Header header : headers) {
-            String value = header.getValue();
-            value = value.replaceAll("\"", "\\\\\"");
-            sb.append("\"")
-                    .append(header.getName())
-                    .append("\":\"")
-                    .append(value)
-                    .append("\",");
+            headerMap.put(header.getName(), header.getValue());
         }
-        return sb.toString();
-    }
-
-    private String format(String target) {
-        if (target != null) {
-            if (!target.startsWith("{") && !target.startsWith("[")) {
-                return "\"" + target + "\"";
-            }
-        }
-        return target;
+        return headerMap;
     }
 
     private String toQueryString(Map<String, Object> map) {

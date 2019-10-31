@@ -17,27 +17,28 @@ import java.util.List;
 public class AssertionUtil {
 
     /**
-     * @Description:        通用部分字段断言方法
+     * @Description:        通用断言方法
      * @param actual        实际对象
-     * @param except        预期对象
      * @param assertion     断言命令行对象
      * @return void
      * @throws
      * @author Sniper
      * @date 2019/5/15 16:28
      */
-    public static void assertion(Object actual, Object except, Assertion assertion) {
+    public static void assertion(Object actual, Assertion assertion) {
+        Object exceptDTO = assertion.responseDTO();
+        Object actualDTO = actual;
         String jsonPath = assertion.jsonPath();
         List<String> keys = assertion.assertionKeys();
         boolean isSort = assertion.isSort();
         if (!StringUtils.isEmpty(jsonPath)) {
-            if (actual instanceof JSONObject && except instanceof JSONObject) {
-                assertion(JSONPath.eval(actual, jsonPath), JSONPath.eval(except, jsonPath), keys, isSort);
-            } else if (actual instanceof JSONArray && except instanceof JSONArray) {
-                assertion(JSONPath.eval(actual, jsonPath), JSONPath.eval(except, jsonPath), keys, isSort);
-            } else {
-                assertion(actual, except, keys, isSort);
-            }
+            exceptDTO = JSONPath.eval(exceptDTO, jsonPath);
+            actualDTO = JSONPath.eval(actualDTO, jsonPath);
+        }
+        if (keys.size() > 0) {
+            assertion(exceptDTO, exceptDTO, keys, isSort);
+        } else {
+            assertion(exceptDTO, exceptDTO, isSort);
         }
     }
 
@@ -69,6 +70,8 @@ public class AssertionUtil {
                     assertion(obj, exceptArray.get(index), keys, false);
                 });
             }
+        } else {
+            assertion("基本类型或对象数据断言", actual, except);
         }
     }
 
@@ -100,7 +103,7 @@ public class AssertionUtil {
                 });
             }
         } else {
-            assertion("数据校验", actual, except);
+            assertion("基本类型或对象数据断言", actual, except);
         }
     }
 

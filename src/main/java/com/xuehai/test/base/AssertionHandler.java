@@ -8,8 +8,8 @@ import com.xuehai.test.model.Entity;
  * @Author Sniper
  * @Date 2019/4/18 13:48
  */
-public abstract class AssertionHandler {
-
-    public abstract void assertion(Object response, Entity entity);
+public interface AssertionHandler {
+    
+    void assertion(Object response, Entity entity);
 
 }
