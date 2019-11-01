@@ -21,24 +21,30 @@ public class BaseTest {
     private static final String CLASS_NAME = BaseTest.class.getName();
     private static BaseClient baseClient;
     private TestCase testCase;
+    private ITestContext iTestContext;
 
     protected BaseClient getBaseClient() {
         return baseClient;
     }
 
+    protected ITestContext getITestContext() {
+        return this.iTestContext;
+    }
+
     /**
      * @description:            初始化TestCase和HttpClient
-     * @param context           ITestContext
+     * @param iTestContext           ITestContext
      * @return void
      * @author Sniper
      * @date 2019/3/15 17:17
      */
     @BeforeClass
-    protected void beforeBaseClass(ITestContext context) {
+    protected void beforeBaseClass(ITestContext iTestContext) {
         Log.info(CLASS_NAME, "测试类{}开始执行", getClass());
+        this.iTestContext = iTestContext;
         Object casePathMap = Configuration.getConfig().get("case-path");
         if (casePathMap != null) {
-            String suiteName = context.getSuite().getName();
+            String suiteName = iTestContext.getSuite().getName();
             Log.debug(CLASS_NAME, "获取测试用例路径,当前SuiteName:{}", suiteName);
             String casePath = (String) ((Map)casePathMap).get(suiteName);
             testCase = parseTestCase(casePath, getClass().getName());
