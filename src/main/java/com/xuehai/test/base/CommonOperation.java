@@ -5,13 +5,13 @@ import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.xuehai.test.model.Entity;
 import com.xuehai.test.model.Response;
+import com.xuehai.test.model.ResponseDTO;
 import com.xuehai.test.utils.AssertionUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.testng.ITestContext;
 import java.util.HashMap;
 import java.util.Set;
-import static io.qameta.allure.Allure.description;
-import static io.qameta.allure.Allure.parameter;
+import static io.qameta.allure.Allure.*;
 
 /**
  * @ClassName CommonOperation
@@ -62,6 +62,15 @@ public class CommonOperation {
         return baseClient.sendHttpRequest(context, entity);
     }
 
+    /**
+     * @description: 下载文件,保存本地
+     * @param httpUrl   文件url
+     * @param savePath  保存路径
+     * @return void
+     * @throws
+     * @author Sniper
+     * @date 2019/11/1 10:23
+     */
     protected void download(String httpUrl, String savePath) {
         baseClient.download(httpUrl, savePath);
     }
@@ -80,14 +89,14 @@ public class CommonOperation {
         try {
             if (response != null) {
                 Assertion assertion = new Assertion(entity.getAssertion());
-                AssertionUtil.assertion("StatusCode校验", response.getStatusCode(),
+                AssertionUtil.assertThat("StatusCode校验", response.getStatusCode(),
                         assertion.statusCode());
-                JSONObject actualResponseDTO = JSONObject.parseObject(JSON.toJSONString(response.getResponseDTO()));
+                ResponseDTO responseDTO = response.getResponseDTO();
                 String action = assertion.action();
                 if (!StringUtils.isEmpty(action)) {
-                    assertionMap.get(assertion.action()).assertion(actualResponseDTO, entity);
+                    assertionMap.get(assertion.action()).assertion(responseDTO, entity);
                 } else {
-                    AssertionUtil.assertion(actualResponseDTO, assertion);
+                    AssertionUtil.assertThat(responseDTO, assertion);
                 }
             } else {
                 throw new IllegalArgumentException("用例断言失败,接口响应信息为空");

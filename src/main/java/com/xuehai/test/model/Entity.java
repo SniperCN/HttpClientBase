@@ -21,7 +21,6 @@ public class Entity implements Serializable {
     private Map<String, String> header;
     private Map<String, Object> queryMap;
     private String requestBody;
-    private String accessToken;
     private String assertion;
     private boolean isSign;
     private boolean isMock;

@@ -27,8 +27,8 @@ public class Assertion {
         return assertion.getIntValue("statusCode");
     }
 
-    public Object responseDTO() throws JSONException {
-        return assertion.get("responseDTO");
+    public String responseDTO() throws JSONException {
+        return assertion.getString("responseDTO");
     }
 
     public String jsonPath() throws JSONException {

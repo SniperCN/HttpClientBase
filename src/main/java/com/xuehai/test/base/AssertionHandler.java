@@ -1,6 +1,7 @@
 package com.xuehai.test.base;
 
 import com.xuehai.test.model.Entity;
+import com.xuehai.test.model.ResponseDTO;
 
 /**
  * @ClassName AssertionHandler
@@ -10,6 +11,6 @@ import com.xuehai.test.model.Entity;
  */
 public interface AssertionHandler {
     
-    void assertion(Object response, Entity entity);
+    void assertion(ResponseDTO responseDTO, Entity entity);
 
 }

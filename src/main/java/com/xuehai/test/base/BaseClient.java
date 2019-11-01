@@ -39,12 +39,19 @@ public class BaseClient {
     public static BaseClient getInstance() {
         if (instance == null) {
             instance = new BaseClient();
-            initRequestConfig();
+            loadHttpClientConfig();
         }
         return instance;
     }
 
-    public static void initRequestConfig() {
+    /**
+     * @description: 加载httpClient配置
+     * @return void
+     * @throws
+     * @author Sniper
+     * @date 2019/11/1 10:03
+     */
+    public static void loadHttpClientConfig() {
         Map httpConfig = (Map) Configuration.getConfig().get("http-client");
         RequestConfig.Builder builder = RequestConfig.custom();
         httpConfig.forEach((key, value) -> {
@@ -98,7 +105,6 @@ public class BaseClient {
             Map<String, Object> queryMap = entity.getQueryMap();
             Map<String, String> header = entity.getHeader();
             String requestBody = entity.getRequestBody();
-            String accessToken = entity.getAccessToken();
             boolean isSign = entity.isSign();
             boolean isMock = entity.isMock();
 
@@ -138,15 +144,16 @@ public class BaseClient {
                         url = url.replace(temp, String.valueOf(value));
                     }
                 } else {
-                    Object obj = context.getAttribute("caseTempDataMap");
+                    Object obj = context.getAttribute("urlParam");
                     if (obj != null) {
-                        url = url.replace(temp, String.valueOf(context.getAttribute(dataKey)));
+                        url = url.replace(temp, String.valueOf(((Map<String, Object>) obj).get(dataKey)));
                     }
                 }
             }
 
             if (isSign) {
-                url = CommonUtil.createRequestSignature(method, url, toQueryString(queryMap), requestBody, accessToken);
+                url = CommonUtil.createRequestSignature(method, url, toQueryString(queryMap), requestBody,
+                        entity.getHeader().get("Authorization"));
             } else {
                 if (queryMap != null && queryMap.size() > 0) {
                     url = url + "?" + toQueryString(queryMap);
@@ -370,6 +377,14 @@ public class BaseClient {
         }
     }
 
+    /**
+     * @description: Header[]转Map
+     * @param headers   请求或响应头信息
+     * @return java.util.Map<java.lang.String,java.lang.String>
+     * @throws
+     * @author Sniper
+     * @date 2019/11/1 10:16
+     */
     private static Map<String, String> parseHeader(Header[] headers) {
         Map<String, String> headerMap = new HashMap<>();
         for (Header header : headers) {
@@ -378,6 +393,14 @@ public class BaseClient {
         return headerMap;
     }
 
+    /**
+     * @description: queryMap转queryString
+     * @param map   Map
+     * @return java.lang.String
+     * @throws
+     * @author Sniper
+     * @date 2019/11/1 10:17
+     */
     private String toQueryString(Map<String, Object> map) {
         StringBuilder stringBuilder = new StringBuilder();
         map.forEach((key, value) -> stringBuilder.append(key).append("=").append(value).append("&"));

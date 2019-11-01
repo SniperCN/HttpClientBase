@@ -163,42 +163,5 @@ public class CommonUtil {
         return decodeString;
     }
 
-    /**
-     * @description:    格式化StringBuilder
-     * @param target    StringBuilder对象
-     * @return          String
-     * @throw
-     * @author Sniper
-     * @date 2019/3/14 15:27
-     */
-    public static String format(StringBuilder target) {
-        int index = target.lastIndexOf(",}");
-        while (index > 0) {
-            target.replace(index, index + 1, "");
-            index = target.lastIndexOf(",}");
-        }
-        index = target.lastIndexOf(",]");
-        while (index > 0) {
-            target.replace(index, index + 1, "");
-            index = target.lastIndexOf(",]");
-        }
-        index = target.lastIndexOf(",)");
-        while (index > 0) {
-            target.replace(index, index + 1, "");
-            index = target.lastIndexOf(",)");
-        }
-        return target.toString();
-    }
-
-    /**
-     * @description: 获取当前方法名
-     * @return java.lang.String
-     * @throw
-     * @author Sniper
-     * @date 2019/5/22 9:16
-     */
-    public static String methodName() {
-        return Thread.currentThread().getStackTrace()[2].getMethodName();
-    }
 
 }

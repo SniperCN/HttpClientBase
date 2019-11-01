@@ -25,7 +25,7 @@ public class AssertionUtil {
      * @author Sniper
      * @date 2019/5/15 16:28
      */
-    public static void assertion(Object actual, Assertion assertion) {
+    public static void assertThat(Object actual, Assertion assertion) {
         Object exceptDTO = assertion.responseDTO();
         Object actualDTO = actual;
         String jsonPath = assertion.jsonPath();
@@ -36,9 +36,9 @@ public class AssertionUtil {
             actualDTO = JSONPath.eval(actualDTO, jsonPath);
         }
         if (keys.size() > 0) {
-            assertion(exceptDTO, exceptDTO, keys, isSort);
+            assertThat(actualDTO, exceptDTO, keys, isSort);
         } else {
-            assertion(exceptDTO, exceptDTO, isSort);
+            assertThat(actualDTO, exceptDTO, isSort);
         }
     }
 
@@ -53,25 +53,25 @@ public class AssertionUtil {
      * @author Sniper
      * @date 2019/5/14 19:28
      */
-    public static void assertion(Object actual, Object except, List<String> keys, boolean isSort) {
+    public static void assertThat(Object actual, Object except, List<String> keys, boolean isSort) {
         if (actual instanceof JSONObject && except instanceof JSONObject) {
-            keys.forEach(key -> assertion(((JSONObject) actual).get(key), ((JSONObject) except).get(key), isSort));
+            keys.forEach(key -> assertThat(((JSONObject) actual).get(key), ((JSONObject) except).get(key), isSort));
         }else if (actual instanceof JSONArray && except instanceof JSONArray) {
             JSONArray actualArray = (JSONArray) actual;
             JSONArray exceptArray = (JSONArray) except;
-            AssertionUtil.assertion("数据条数校验", actualArray.size(), exceptArray.size());
+            AssertionUtil.assertThat("数据条数校验", actualArray.size(), exceptArray.size());
             if (isSort) {
                 for (int i = 0; i < exceptArray.size(); i++) {
-                    assertion(actualArray.get(i), exceptArray.get(i), keys, true);
+                    assertThat(actualArray.get(i), exceptArray.get(i), keys, true);
                 }
             } else {
                 actualArray.forEach(obj -> {
                     int index = exceptArray.indexOf(obj);
-                    assertion(obj, exceptArray.get(index), keys, false);
+                    assertThat(obj, exceptArray.get(index), keys, false);
                 });
             }
         } else {
-            assertion("基本类型或对象数据断言", actual, except);
+            assertThat("基本类型或对象数据断言", actual, except);
         }
     }
 
@@ -85,25 +85,25 @@ public class AssertionUtil {
      * @author Sniper
      * @date 2019/5/14 19:28
      */
-    public static void assertion(Object actual, Object except, boolean isSort) {
+    public static void assertThat(Object actual, Object except, boolean isSort) {
         if (actual instanceof JSONObject && except instanceof JSONObject) {
-            ((JSONObject) actual).forEach((key, value) -> assertion(value, ((JSONObject) except).get(key), isSort));
+            ((JSONObject) actual).forEach((key, value) -> assertThat(value, ((JSONObject) except).get(key), isSort));
         }else if (actual instanceof JSONArray && except instanceof JSONArray) {
             JSONArray actualArray = (JSONArray) actual;
             JSONArray exceptArray = (JSONArray) except;
-            assertion("数据条数校验", actualArray.size(), exceptArray.size());
+            assertThat("数据条数校验", actualArray.size(), exceptArray.size());
             if (isSort) {
                 for (int i = 0; i < exceptArray.size(); i++) {
-                    assertion(actualArray.get(i), exceptArray.get(i), true);
+                    assertThat(actualArray.get(i), exceptArray.get(i), true);
                 }
             } else {
                 actualArray.forEach(obj -> {
                     int index = exceptArray.indexOf(obj);
-                    assertion(obj, exceptArray.get(index), false);
+                    assertThat(obj, exceptArray.get(index), false);
                 });
             }
         } else {
-            assertion("基本类型或对象数据断言", actual, except);
+            assertThat("基本类型或对象数据断言", actual, except);
         }
     }
 
@@ -117,7 +117,7 @@ public class AssertionUtil {
      * @author Sniper
      * @date 2019/4/19 10:12
      */
-    public static void assertion(String description, Object actual, Object expect) {
+    public static void assertThat(String description, Object actual, Object expect) {
         Assertions.assertThat(actual)
                 .as(description)
                 .withFailMessage("Expect:%s, Actual:%s", expect, actual)
@@ -133,7 +133,7 @@ public class AssertionUtil {
      * @author Sniper
      * @date 2019/5/14 19:23
      */
-    public static void assertion(String description, boolean condition) {
+    public static void assertThat(String description, boolean condition) {
         Assertions.assertThat(condition)
                 .as(description)
                 .withFailMessage("False")
