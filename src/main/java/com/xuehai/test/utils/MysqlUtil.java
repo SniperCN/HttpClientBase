@@ -7,14 +7,14 @@ import com.xuehai.test.base.Log;
 import java.sql.*;
 
 /**
- * @ClassName MySQLUtil
+ * @ClassName MysqlUtil
  * @Description:    关系型数据库工具类
  * @Author Sniper
  * @Date 2019/4/16 17:16
  */
-public class MySQLUtil {
+public class MysqlUtil {
 
-    private static final String CLASS_NAME = MySQLUtil.class.getName();
+    private static final String CLASS_NAME = MysqlUtil.class.getName();
     private static Connection conn;
     private static PreparedStatement pstat;
     private static ResultSet rs;
