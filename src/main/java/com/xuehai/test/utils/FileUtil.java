@@ -195,18 +195,18 @@ public class FileUtil {
      * @author Sniper
      * @date 2019/5/22 9:51
      */
-    public static void deleteDirectory(File directory) throws IOException {
+    public static void deleteDirectory(File directory) {
         if (directory == null) {
-            throw new IllegalArgumentException("错误的参数:null");
+            Log.error(CLASS_NAME, "文件夹删除失败,传入文件夹: null");
         } else if (!directory.exists()) {
-            throw new IllegalArgumentException("文件不存在,当前路径:" + directory.getAbsolutePath());
+            Log.error(CLASS_NAME, "文件夹删除失败,文件夹不存在,当前路径: " + directory.getAbsolutePath());
         } else {
             delete(directory);
+            if (!directory.delete()) {
+                Log.error(CLASS_NAME, "文件删除失败,当前路径: " + directory.getAbsolutePath());
+            }
         }
 
-        if (!directory.delete()) {
-            throw new IOException("文件夹删除失败,当前路径:" + directory.getAbsolutePath());
-        }
     }
 
     /**
@@ -217,11 +217,11 @@ public class FileUtil {
      * @author Sniper
      * @date 2019/5/22 9:35
      */
-    public static void delete(File file) throws IOException {
+    public static void delete(File file){
         if (file == null) {
-            throw new IllegalArgumentException("错误的参数:null");
+            Log.error(CLASS_NAME, "文件删除失败,传入文件: null");
         } else if (!file.exists()) {
-            throw new IllegalArgumentException("文件不存在,当前路径:" + file.getAbsolutePath());
+            Log.error(CLASS_NAME, "文件删除失败,文件不存在,当前路径: " + file.getAbsolutePath());
         } else {
             if (file.isDirectory()) {
                 File [] files = file.listFiles();
@@ -232,7 +232,7 @@ public class FileUtil {
                 }
             } else {
                 if (!file.delete()) {
-                    throw new IOException("文件删除失败,当前路径:" + file.getAbsolutePath());
+                    Log.error(CLASS_NAME, "文件删除失败: ,当前路径: " + file.getAbsolutePath());
                 }
             }
         }
