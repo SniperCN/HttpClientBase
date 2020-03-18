@@ -295,53 +295,52 @@ public class BaseClient {
     private Response sendHttpRequest(HttpRequestBase httpRequest, Map<String, String> header) {
         CloseableHttpClient httpClient = null;
         CloseableHttpResponse httpResponse = null;
-        Response response;
+        Response response = null;
         try {
-            httpClient = HttpClients.createDefault();
-            httpRequest.setConfig(requestConfig);
-            for(Map.Entry<String, String> entry: header.entrySet()){
-                String key=entry.getKey();
-                String value=entry.getValue();
-                httpRequest.setHeader(key, value);
-            }
-            String bodyInfo = null;
-            HttpEntity httpEntity = null;
-            if (httpRequest instanceof HttpPost) {
-                httpEntity = ((HttpPost) httpRequest).getEntity();
-            }
-            if (httpRequest instanceof HttpDelete) {
-                httpEntity = ((HttpDelete) httpRequest).getEntity();
-            }
-            if (httpRequest instanceof HttpPut) {
-                httpEntity = ((HttpPut) httpRequest).getEntity();
-            }
-            if (httpEntity != null) {
-                bodyInfo = EntityUtils.toString(httpEntity);
-            }
-            Request request = new Request(httpRequest.getRequestLine().getUri(), httpRequest.getMethod(),
-                    parseHeader(httpRequest.getAllHeaders()), bodyInfo);
-            Log.info(CLASS_NAME, "请求信息: {}", JSON.toJSONString(request, SerializerFeature.WriteMapNullValue));
-            httpResponse = httpClient.execute(httpRequest);
-            ResponseDTO responseDTO = JSON.toJavaObject(JSON.parseObject(EntityUtils.toString(httpResponse.getEntity(), "UTF-8")),
-                    ResponseDTO.class);
-            response = new Response(httpResponse.getStatusLine().getStatusCode(), httpResponse.getStatusLine().getReasonPhrase(),
-                    parseHeader(httpResponse.getAllHeaders()), false, responseDTO);
-            Log.info(CLASS_NAME, "响应信息: {}", JSON.toJSONString(response, SerializerFeature.WriteMapNullValue));
-        } catch (IOException e) {
-            response = new Response(0, e.getMessage(), null, true, null);
-            Log.error(CLASS_NAME, "请求失败", e);
-
-        } finally {
             try {
+                httpClient = HttpClients.createDefault();
+                httpRequest.setConfig(requestConfig);
+                for (Map.Entry<String, String> entry : header.entrySet()) {
+                    String key = entry.getKey();
+                    String value = entry.getValue();
+                    httpRequest.setHeader(key, value);
+                }
+                String bodyInfo = null;
+                HttpEntity httpEntity = null;
+                if (httpRequest instanceof HttpPost) {
+                    httpEntity = ((HttpPost) httpRequest).getEntity();
+                }
+                if (httpRequest instanceof HttpDelete) {
+                    httpEntity = ((HttpDelete) httpRequest).getEntity();
+                }
+                if (httpRequest instanceof HttpPut) {
+                    httpEntity = ((HttpPut) httpRequest).getEntity();
+                }
+                if (httpEntity != null) {
+                    bodyInfo = EntityUtils.toString(httpEntity);
+                }
+                Request request = new Request(httpRequest.getRequestLine().getUri(), httpRequest.getMethod(),
+                        parseHeader(httpRequest.getAllHeaders()), bodyInfo);
+                Log.info(CLASS_NAME, "请求信息: {}", JSON.toJSONString(request, SerializerFeature.WriteMapNullValue));
+                httpResponse = httpClient.execute(httpRequest);
+                ResponseDTO responseDTO = JSON.toJavaObject(JSON.parseObject(EntityUtils.toString(httpResponse.getEntity(), "UTF-8")),
+                        ResponseDTO.class);
+                response = new Response(httpResponse.getStatusLine().getStatusCode(), httpResponse.getStatusLine().getReasonPhrase(),
+                        parseHeader(httpResponse.getAllHeaders()), false, responseDTO);
+                Log.info(CLASS_NAME, "响应信息: {}", JSON.toJSONString(response, SerializerFeature.WriteMapNullValue));
+            } finally {
                 if (httpResponse != null) {
                     httpResponse.close();
                 }
                 if (httpClient != null) {
                     httpClient.close();
                 }
-            }catch (IOException e) {
-                Log.error(CLASS_NAME, "httpClient连接关闭失败", e);
             }
+        } catch (IOException e) {
+            if (response == null) {
+                response = new Response(0, e.getMessage(), null, true, null);
+            }
+            Log.error(CLASS_NAME, "http请求失败", e);
         }
         return response;
     }
@@ -350,30 +349,28 @@ public class BaseClient {
         CloseableHttpClient httpClient = null;
         CloseableHttpResponse response = null;
         try {
-            httpClient = HttpClients.createDefault();
-            HttpGet httpGet = new HttpGet(httpUrl);
-            httpGet.setConfig(requestConfig);
-            Request request = new Request(httpGet.getRequestLine().getUri(), httpGet.getMethod(),
-                    parseHeader(httpGet.getAllHeaders()), null);
-            Log.info(CLASS_NAME, "请求信息: {}", JSON.toJSONString(request, SerializerFeature.WriteMapNullValue));
-            response = httpClient.execute(httpGet);
-            HttpEntity httpEntity = response.getEntity();
-            if (httpEntity != null) {
-                FileUtil.write(httpEntity.getContent(), savePath);
-            }
-        } catch (IOException e) {
-            Log.error(CLASS_NAME, "下载失败", e);
-        } finally {
             try {
+                httpClient = HttpClients.createDefault();
+                HttpGet httpGet = new HttpGet(httpUrl);
+                httpGet.setConfig(requestConfig);
+                Request request = new Request(httpGet.getRequestLine().getUri(), httpGet.getMethod(),
+                        parseHeader(httpGet.getAllHeaders()), null);
+                Log.info(CLASS_NAME, "请求信息: {}", JSON.toJSONString(request, SerializerFeature.WriteMapNullValue));
+                response = httpClient.execute(httpGet);
+                HttpEntity httpEntity = response.getEntity();
+                if (httpEntity != null) {
+                    FileUtil.write(httpEntity.getContent(), savePath);
+                }
+            } finally {
                 if (response != null) {
                     response.close();
                 }
                 if (httpClient != null) {
                     httpClient.close();
                 }
-            } catch (IOException e) {
-                Log.error(CLASS_NAME, "httpClient连接关闭失败", e);
             }
+        } catch (IOException e) {
+            Log.error(CLASS_NAME, "文件下载失败", e);
         }
     }
 

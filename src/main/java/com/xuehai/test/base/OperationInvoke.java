@@ -15,7 +15,6 @@ import java.util.*;
  * @Date 2019/10/21 17:07
  */
 public class OperationInvoke {
-    private static final String CLASS_NAME = OperationInvoke.class.getName();
 
     /**
      * @description: 操作方法迭代器,支持断言

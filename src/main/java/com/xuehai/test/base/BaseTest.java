@@ -52,7 +52,7 @@ public class BaseTest {
                 baseClient = BaseClient.getInstance();
             }
         } else {
-            throw new IllegalArgumentException("Configuration缺少case-path配置项");
+            throw new IllegalArgumentException("config.yaml缺少case-path配置项");
         }
 
     }

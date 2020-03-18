@@ -2,7 +2,6 @@ package com.xuehai.test.base;
 
 
 import com.xuehai.test.utils.FileUtil;
-
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +29,7 @@ public class Configuration {
             String targetPath = System.getProperty("user.dir");
             List<String> configPathList = FileUtil.searchFiles(targetPath, "config.yaml");
             if (configPathList.size() < 1) {
-                throw new IllegalArgumentException("未找到config.yaml配置文件");
+                Log.error(CLASS_NAME,"配置文件加载失败,未找到config.yaml配置文件");
             } else if (configPathList.size() == 1) {
                 config = FileUtil.getYamlValue(configPathList.get(0));
             } else {

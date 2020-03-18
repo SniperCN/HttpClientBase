@@ -188,28 +188,6 @@ public class FileUtil {
     }
 
     /**
-     * @description:    删除文件夹
-     * @param directory     待删文件夹
-     * @return void
-     * @throw IOException
-     * @author Sniper
-     * @date 2019/5/22 9:51
-     */
-    public static void deleteDirectory(File directory) {
-        if (directory == null) {
-            Log.error(CLASS_NAME, "文件夹删除失败,传入文件夹: null");
-        } else if (!directory.exists()) {
-            Log.error(CLASS_NAME, "文件夹删除失败,文件夹不存在,当前路径: " + directory.getAbsolutePath());
-        } else {
-            delete(directory);
-            if (!directory.delete()) {
-                Log.error(CLASS_NAME, "文件删除失败,当前路径: " + directory.getAbsolutePath());
-            }
-        }
-
-    }
-
-    /**
      * @description: 文件删除
      * @param file      待删文件
      * @return void
@@ -219,7 +197,7 @@ public class FileUtil {
      */
     public static void delete(File file){
         if (file == null) {
-            Log.error(CLASS_NAME, "文件删除失败,传入文件: null");
+            throw new IllegalArgumentException("文件删除失败,非法参数:null");
         } else if (!file.exists()) {
             Log.error(CLASS_NAME, "文件删除失败,文件不存在,当前路径: " + file.getAbsolutePath());
         } else {
@@ -228,6 +206,9 @@ public class FileUtil {
                 if (files != null) {
                     for (File f : files) {
                         delete(f);
+                    }
+                    if (!file.delete()) {
+                        Log.error(CLASS_NAME, "文件删除失败: ,当前路径: " + file.getAbsolutePath());
                     }
                 }
             } else {
