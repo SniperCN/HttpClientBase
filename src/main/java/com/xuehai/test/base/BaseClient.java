@@ -8,7 +8,6 @@ import com.xuehai.test.utils.FileUtil;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
@@ -318,7 +317,7 @@ public class BaseClient {
         try {
             try {
 //                httpClient = HttpClients.createDefault();
-                httpClient = (CloseableHttpClient) httpClientInit(httpRequest.getURI().getHost());
+                httpClient = httpClientInit();
                 httpRequest.setConfig(requestConfig);
                 for (Map.Entry<String, String> entry : header.entrySet()) {
                     String key = entry.getKey();
@@ -343,8 +342,16 @@ public class BaseClient {
                         parseHeader(httpRequest.getAllHeaders()), bodyInfo);
                 Log.info(CLASS_NAME, "请求信息: {}", JSON.toJSONString(request, SerializerFeature.WriteMapNullValue));
                 httpResponse = httpClient.execute(httpRequest);
-                ResponseDTO responseDTO = JSON.parseObject(EntityUtils.toString(httpResponse.getEntity(), "UTF-8"),
-                        ResponseDTO.class);
+                String responseData = EntityUtils.toString(httpResponse.getEntity());
+                ResponseDTO responseDTO;
+                if (responseData.contains("\"code\"") && responseData.contains("\"msg\"") &&
+                        responseData.contains("\"data\"") && responseData.contains("\"desc\"")) {
+                    responseDTO = JSON.parseObject(EntityUtils.toString(httpResponse.getEntity(), "UTF-8"),
+                            ResponseDTO.class);
+                } else {
+                    responseDTO = new ResponseDTO(httpResponse.getStatusLine().getStatusCode(), httpResponse.getStatusLine().getReasonPhrase()
+                            , responseData, null);
+                }
                 response = new Response(httpResponse.getStatusLine().getStatusCode(), httpResponse.getStatusLine().getReasonPhrase(),
                         parseHeader(httpResponse.getAllHeaders()), false, responseDTO);
                 Log.info(CLASS_NAME, "响应信息: {}", JSON.toJSONString(response, SerializerFeature.WriteMapNullValue));
@@ -396,14 +403,13 @@ public class BaseClient {
 
     /**
      * @description: HttpClient初始化
-     * @param url
      * @return org.apache.http.client.HttpClient
      * @throws
      * @author Sniper
      * @date 2020/3/26 13:01
      */
-    private static HttpClient httpClientInit(String url) {
-        HttpClient httpClient = HttpClientBuilder.create().build();
+    private static CloseableHttpClient httpClientInit() {
+        CloseableHttpClient httpClient = HttpClientBuilder.create().build();
         String protocol = (String) Configuration.getConfig().get("protocol");
         if ("https".equals(protocol)) {
             return sslClient();
@@ -418,7 +424,7 @@ public class BaseClient {
      * @author Sniper
      * @date 2020/3/26 13:03
      */
-    private static HttpClient sslClient() {
+    private static CloseableHttpClient sslClient() {
         CloseableHttpClient closeableHttpClient = null;
         try {
             // 在调用SSL之前需要重写验证方法，取消检测SSL

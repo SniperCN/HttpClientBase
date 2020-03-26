@@ -10,6 +10,7 @@ import com.xuehai.test.utils.AssertionUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.testng.ITestContext;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import static io.qameta.allure.Allure.*;
 
@@ -30,26 +31,29 @@ public class CommonOperation {
     /**
      * @description: 发送http请求,并验证响应数据
      * @param context           testNG ITestContext
-     * @param entity            请求实体
+     * @param entityMap         请求实体map
      * @param assertionMap      测试类断言Map<String, AssertionHandler>
      * @return void
      * @throws
      * @author Sniper
      * @date 2019/10/9 14:14
      */
-    protected void sendHttpRequest(ITestContext context, Entity entity, HashMap<String, AssertionHandler> assertionMap) {
-        assertion(sendHttpRequest(context, entity), assertionMap, entity);
+    protected void sendHttpRequest(ITestContext context, Map<String, Entity> entityMap,
+                                   HashMap<String, AssertionHandler> assertionMap) {
+        Entity entity = entityMap.get(getParentMethodName());
+        assertion(sendHttpRequest(context, entityMap), assertionMap, entity);
     }
 
     /**
      * @description: 发送http请求
-     * @param entity 请求实体
+     * @param entityMap 请求实体map
      * @return java.lang.String
      * @throws
      * @author Sniper
      * @date 2019/10/9 14:13
      */
-    protected Response sendHttpRequest(ITestContext context, Entity entity) {
+    protected Response sendHttpRequest(ITestContext context, Map<String, Entity> entityMap) {
+        Entity entity = entityMap.get(getParentMethodName());
         JSONObject contextJson = new JSONObject();
         Set<String> attrName = context.getAttributeNames();
         for (String name : attrName) {
@@ -106,5 +110,15 @@ public class CommonOperation {
         }
     }
 
+    /**
+     * @description: 获取父级方法名
+     * @return java.lang.String
+     * @throws
+     * @author Sniper
+     * @date 2020/3/26 17:29
+     */
+    private String getParentMethodName() {
+        return Thread.currentThread().getStackTrace()[3].getMethodName();
+    }
 
 }

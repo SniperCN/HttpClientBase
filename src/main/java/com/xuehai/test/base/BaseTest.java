@@ -118,7 +118,7 @@ public class BaseTest {
      */
     protected Iterator<Object[]> initData() {
         List<Object[]> dataList = new ArrayList<>();
-        List<Map<String, List<Entity>>> list = testCase.getEntityList();
+        List<Map<String, Entity>> list = testCase.getEntityList();
         list.forEach(map -> dataList.add(new Object[]{map}));
         return dataList.iterator();
     }

@@ -16,6 +16,6 @@ public class TestCase implements Serializable {
     private static final long serialVersionUID = 7625328979939407351L;
     private String name;
     private String className;
-    private List<Map<String, List<Entity>>> entityList;
+    private List<Map<String, Entity>> entityList;
 
 }
