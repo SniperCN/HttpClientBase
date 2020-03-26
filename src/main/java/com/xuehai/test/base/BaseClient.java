@@ -8,18 +8,37 @@ import com.xuehai.test.utils.FileUtil;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.AuthSchemes;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.mockserver.client.MockServerClient;
 import org.testng.ITestContext;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -298,7 +317,8 @@ public class BaseClient {
         Response response = null;
         try {
             try {
-                httpClient = HttpClients.createDefault();
+//                httpClient = HttpClients.createDefault();
+                httpClient = (CloseableHttpClient) httpClientInit(httpRequest.getURI().getHost());
                 httpRequest.setConfig(requestConfig);
                 for (Map.Entry<String, String> entry : header.entrySet()) {
                     String key = entry.getKey();
@@ -323,7 +343,7 @@ public class BaseClient {
                         parseHeader(httpRequest.getAllHeaders()), bodyInfo);
                 Log.info(CLASS_NAME, "请求信息: {}", JSON.toJSONString(request, SerializerFeature.WriteMapNullValue));
                 httpResponse = httpClient.execute(httpRequest);
-                ResponseDTO responseDTO = JSON.toJavaObject(JSON.parseObject(EntityUtils.toString(httpResponse.getEntity(), "UTF-8")),
+                ResponseDTO responseDTO = JSON.parseObject(EntityUtils.toString(httpResponse.getEntity(), "UTF-8"),
                         ResponseDTO.class);
                 response = new Response(httpResponse.getStatusLine().getStatusCode(), httpResponse.getStatusLine().getReasonPhrase(),
                         parseHeader(httpResponse.getAllHeaders()), false, responseDTO);
@@ -373,6 +393,62 @@ public class BaseClient {
             Log.error(CLASS_NAME, "文件下载失败", e);
         }
     }
+
+    /**
+     * @description: HttpClient初始化
+     * @param url
+     * @return org.apache.http.client.HttpClient
+     * @throws
+     * @author Sniper
+     * @date 2020/3/26 13:01
+     */
+    private static HttpClient httpClientInit(String url) {
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        String protocol = (String) Configuration.getConfig().get("protocol");
+        if ("https".equals(protocol)) {
+            return sslClient();
+        }
+        return httpClient;
+    }
+
+    /**
+     * @description: 在调用SSL之前需要重写验证方法，取消检测SSL，创建ConnectionManager，添加Connection配置信息，支持https
+     * @return org.apache.http.client.HttpClient
+     * @throws 
+     * @author Sniper
+     * @date 2020/3/26 13:03
+     */
+    private static HttpClient sslClient() {
+        CloseableHttpClient closeableHttpClient = null;
+        try {
+            // 在调用SSL之前需要重写验证方法，取消检测SSL
+            X509TrustManager trustManager = new X509TrustManager() {
+                @Override public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+                @Override public void checkClientTrusted(X509Certificate[] xcs, String str) {}
+                @Override public void checkServerTrusted(X509Certificate[] xcs, String str) {}
+            };
+            SSLContext ctx = SSLContext.getInstance(SSLConnectionSocketFactory.TLS);
+            ctx.init(null, new TrustManager[] { trustManager }, null);
+            SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(ctx, NoopHostnameVerifier.INSTANCE);
+            // 创建Registry
+            RequestConfig requestConfig = RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD_STRICT)
+                    .setExpectContinueEnabled(Boolean.TRUE).setTargetPreferredAuthSchemes(Arrays.asList(AuthSchemes.NTLM,AuthSchemes.DIGEST))
+                    .setProxyPreferredAuthSchemes(Arrays.asList(AuthSchemes.BASIC)).build();
+            Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
+                    .register("http", PlainConnectionSocketFactory.INSTANCE)
+                    .register("https",socketFactory).build();
+            // 创建ConnectionManager，添加Connection配置信息
+            PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
+            closeableHttpClient = HttpClients.custom().setConnectionManager(connectionManager)
+                    .setDefaultRequestConfig(requestConfig).build();
+        } catch (KeyManagementException | NoSuchAlgorithmException e) {
+            Log.error(CLASS_NAME, "初始化SSL Client失败", e);
+        }
+        return closeableHttpClient;
+    }
+
 
     /**
      * @description: Header[]转Map
