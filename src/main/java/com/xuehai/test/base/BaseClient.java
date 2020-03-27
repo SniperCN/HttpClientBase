@@ -136,16 +136,18 @@ public class BaseClient {
 
             String protocol = (String) Configuration.getConfig().get("protocol");
             if (protocol != null) {
-                if ("http".equals(protocol)) {
-                    if (!url.startsWith("http://")) {
-                        url = "http://" + url;
+                if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                    if ("http".equals(protocol)) {
+                        if (!url.startsWith("http://")) {
+                            url = "http://" + url;
+                        }
+                    } else if ("https".equals(protocol)) {
+                        if (!url.startsWith("https://")) {
+                            url = "https://" + url;
+                        }
+                    } else {
+                        throw new IllegalArgumentException("错误的协议配置");
                     }
-                } else if ("https".equals(protocol)) {
-                    if (!url.startsWith("https://")) {
-                        url = "https://" + url;
-                    }
-                } else {
-                    throw new IllegalArgumentException("错误的协议配置");
                 }
             } else {
                 throw new IllegalArgumentException("config.yaml缺少protocol配置");
@@ -316,8 +318,7 @@ public class BaseClient {
         Response response = null;
         try {
             try {
-//                httpClient = HttpClients.createDefault();
-                httpClient = httpClientInit();
+                httpClient = httpClientInit(httpRequest.getURI().getScheme());
                 httpRequest.setConfig(requestConfig);
                 for (Map.Entry<String, String> entry : header.entrySet()) {
                     String key = entry.getKey();
@@ -346,8 +347,7 @@ public class BaseClient {
                 ResponseDTO responseDTO;
                 if (responseData.contains("\"code\"") && responseData.contains("\"msg\"") &&
                         responseData.contains("\"data\"") && responseData.contains("\"desc\"")) {
-                    responseDTO = JSON.parseObject(EntityUtils.toString(httpResponse.getEntity(), "UTF-8"),
-                            ResponseDTO.class);
+                    responseDTO = JSON.parseObject(responseData, ResponseDTO.class);
                 } else {
                     responseDTO = new ResponseDTO(httpResponse.getStatusLine().getStatusCode(), httpResponse.getStatusLine().getReasonPhrase()
                             , responseData, null);
@@ -377,7 +377,7 @@ public class BaseClient {
         CloseableHttpResponse response = null;
         try {
             try {
-                httpClient = HttpClients.createDefault();
+                httpClient = httpClientInit(httpUrl.startsWith("http") ? "http" : "https");
                 HttpGet httpGet = new HttpGet(httpUrl);
                 httpGet.setConfig(requestConfig);
                 Request request = new Request(httpGet.getRequestLine().getUri(), httpGet.getMethod(),
@@ -408,9 +408,8 @@ public class BaseClient {
      * @author Sniper
      * @date 2020/3/26 13:01
      */
-    private static CloseableHttpClient httpClientInit() {
+    private static CloseableHttpClient httpClientInit(String protocol) {
         CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-        String protocol = (String) Configuration.getConfig().get("protocol");
         if ("https".equals(protocol)) {
             return sslClient();
         }
