@@ -71,37 +71,39 @@ public class BaseClient {
      */
     public static void loadHttpClientConfig() {
         Map httpConfig = (Map) Configuration.getConfig().get("http-client");
-        RequestConfig.Builder builder = RequestConfig.custom();
-        httpConfig.forEach((key, value) -> {
-            switch(key.toString()) {
-                case "proxy" :
-                    Map httpProxy = (Map) value;
-                    Object host = httpProxy.get("host");
-                    Object port = httpProxy.get("port");
-                    if (host != null && port != null) {
-                        HttpHost httpHost = new HttpHost((String) httpProxy.get("host"), (Integer) httpProxy.get("port"));
-                        builder.setProxy(httpHost);
-                    }
-                    break;
-                case "socket-timeout" :
-                    if (value != null) {
-                        builder.setSocketTimeout((Integer) value);
-                    }
-                    break;
-                case "connect-timeout" :
-                    if (value != null) {
-                        builder.setConnectTimeout((Integer) value);
-                    }
-                    break;
-                case "connection-request-timeout" :
-                    if (value != null) {
-                        builder.setConnectionRequestTimeout((Integer) value);
-                    }
-                    break;
-                default : break;
-            }
-            requestConfig = builder.build();
-        });
+        if (httpConfig != null) {
+            RequestConfig.Builder builder = RequestConfig.custom();
+            httpConfig.forEach((key, value) -> {
+                switch(key.toString()) {
+                    case "proxy" :
+                        Map httpProxy = (Map) value;
+                        Object host = httpProxy.get("host");
+                        Object port = httpProxy.get("port");
+                        if (host != null && port != null) {
+                            HttpHost httpHost = new HttpHost((String) httpProxy.get("host"), (Integer) httpProxy.get("port"));
+                            builder.setProxy(httpHost);
+                        }
+                        break;
+                    case "socket-timeout" :
+                        if (value != null) {
+                            builder.setSocketTimeout((Integer) value);
+                        }
+                        break;
+                    case "connect-timeout" :
+                        if (value != null) {
+                            builder.setConnectTimeout((Integer) value);
+                        }
+                        break;
+                    case "connection-request-timeout" :
+                        if (value != null) {
+                            builder.setConnectionRequestTimeout((Integer) value);
+                        }
+                        break;
+                    default : break;
+                }
+                requestConfig = builder.build();
+            });
+        }
     }
 
     /**
