@@ -23,7 +23,7 @@ public class CommonOperation {
     private static final String CLASS_NAME = CommonOperation.class.getName();
     private BaseClient baseClient;
 
-    public CommonOperation(BaseClient baseClient) {
+    protected CommonOperation(BaseClient baseClient) {
         this.baseClient = baseClient;
     }
 
@@ -56,9 +56,8 @@ public class CommonOperation {
             Object value  = context.getAttribute(name);
             contextJson.put(name, value);
         }
-        description(entity.getDescription());
-        parameter("ITestContext: ", contextJson.toJSONString());
-        parameter("Entity: ", JSON.toJSONString(entity));
+        parameter("ITestContext<"+ entity.getDescription() + "> ", contextJson.toJSONString());
+        parameter("Entity<"+ entity.getDescription() + "> ", JSON.toJSONString(entity));
         return baseClient.sendHttpRequest(context, entity);
     }
 
