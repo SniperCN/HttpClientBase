@@ -123,7 +123,7 @@ public class BaseClient {
             String url = entity.getUrl();
             Map<String, Object> urlParam = entity.getUrlParam();
             Map<String, Object> queryMap = entity.getQueryMap();
-            Map<String, String> header = entity.getHeader();
+            Map<String, Object> header = entity.getHeader();
             String requestBody = entity.getRequestBody();
             boolean isSign = entity.isSign();
             boolean isMock = entity.isMock();
@@ -175,7 +175,7 @@ public class BaseClient {
 
             if (isSign) {
                 url = CommonUtil.createRequestSignature(method, url, toQueryString(queryMap), requestBody,
-                        entity.getHeader().get("Authorization"));
+                        String.valueOf(entity.getHeader().get("Authorization")));
             } else {
                 if (queryMap != null && queryMap.size() > 0) {
                     url = url + "?" + toQueryString(queryMap);
@@ -225,7 +225,7 @@ public class BaseClient {
         return sendHttpRequest(httpGet, new HashMap<>());
     }
 
-    public Response sendHttpGet(String httpUrl, Map<String, String> header) {
+    public Response sendHttpGet(String httpUrl, Map<String, Object> header) {
         HttpGet httpGet = new HttpGet(httpUrl);
         return sendHttpRequest(httpGet, header);
     }
@@ -235,19 +235,19 @@ public class BaseClient {
         return sendHttpRequest(httpPost, new HashMap<>());
     }
 
-    public Response sendHttpPost(String httpUrl, Map<String, String> header) {
+    public Response sendHttpPost(String httpUrl, Map<String, Object> header) {
         HttpPost httpPost = new HttpPost(httpUrl);
         return sendHttpRequest(httpPost, header);
     }
 
-    public Response sendHttpPost(String httpUrl, String body, Map<String, String> header) {
+    public Response sendHttpPost(String httpUrl, String body, Map<String, Object> header) {
         HttpPost httpPost = new HttpPost(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
         httpPost.setEntity(stringEntity);
         return sendHttpRequest(httpPost, header);
     }
 
-    public Response sendHttpPost(String httpUrl, Map<String, File> map, Map<String, String> header) {
+    public Response sendHttpPost(String httpUrl, Map<String, File> map, Map<String, Object> header) {
         HttpPost httpPost = new HttpPost(httpUrl);
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();
         for(Map.Entry<String, File> entry : map.entrySet()){
@@ -266,12 +266,12 @@ public class BaseClient {
         return sendHttpRequest(httpDelete, new HashMap<>());
     }
 
-    public Response sendHttpDelete(String httpUrl, Map<String, String> header) {
+    public Response sendHttpDelete(String httpUrl, Map<String, Object> header) {
         HttpDelete httpDelete = new HttpDelete(httpUrl);
         return sendHttpRequest(httpDelete, header);
     }
 
-    public Response sendHttpDelete(String httpUrl, String body, Map<String, String> header) {
+    public Response sendHttpDelete(String httpUrl, String body, Map<String, Object> header) {
         HttpDelete httpDelete = new HttpDelete(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
         httpDelete.setEntity(stringEntity);
@@ -285,12 +285,12 @@ public class BaseClient {
         return sendHttpRequest(httpPut, new HashMap<>());
     }
 
-    public Response sendHttpPut(String httpUrl, Map<String, String> header) {
+    public Response sendHttpPut(String httpUrl, Map<String, Object> header) {
         HttpPut httpPut = new HttpPut(httpUrl);
         return sendHttpRequest(httpPut, header);
     }
 
-    public Response sendHttpPut(String httpUrl, String body, Map<String, String> header) {
+    public Response sendHttpPut(String httpUrl, String body, Map<String, Object> header) {
         HttpPut httpPut = new HttpPut(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
         httpPut.setEntity(stringEntity);
@@ -302,19 +302,19 @@ public class BaseClient {
         return sendHttpRequest(httpPatch, new HashMap<>());
     }
 
-    public Response sendHttpPatch(String httpUrl, Map<String, String> header) {
+    public Response sendHttpPatch(String httpUrl, Map<String, Object> header) {
         HttpPatch httpPatch = new HttpPatch(httpUrl);
         return sendHttpRequest(httpPatch, header);
     }
 
-    public Response sendHttpPatch(String httpUrl, String body, Map<String, String> header) {
+    public Response sendHttpPatch(String httpUrl, String body, Map<String, Object> header) {
         HttpPatch httpPatch = new HttpPatch(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
         httpPatch.setEntity(stringEntity);
         return sendHttpRequest(httpPatch, header);
     }
 
-    private Response sendHttpRequest(HttpRequestBase httpRequest, Map<String, String> header) {
+    private Response sendHttpRequest(HttpRequestBase httpRequest, Map<String, Object> header) {
         CloseableHttpClient httpClient = null;
         CloseableHttpResponse httpResponse = null;
         Response response = null;
@@ -322,9 +322,9 @@ public class BaseClient {
             try {
                 httpClient = httpClientInit(httpRequest.getURI().getScheme());
                 httpRequest.setConfig(requestConfig);
-                for (Map.Entry<String, String> entry : header.entrySet()) {
+                for (Map.Entry<String, Object> entry : header.entrySet()) {
                     String key = entry.getKey();
-                    String value = entry.getValue();
+                    String value = String.valueOf(entry.getValue());
                     httpRequest.setHeader(key, value);
                 }
                 String bodyInfo = null;

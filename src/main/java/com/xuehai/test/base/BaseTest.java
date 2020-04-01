@@ -83,23 +83,22 @@ public class BaseTest {
             if (!StringUtils.isEmpty(filePath)) {
                 String testCaseJson = FileUtil.read(filePath, "UTF-8");
                 String jsonPath = "$[className='" + className + "']";
-                Object tempTestCases = JSONPath.read(testCaseJson, jsonPath);
-                if (tempTestCases != null) {
-                    JSONArray testCases = (JSONArray) JSONPath.read(testCaseJson, jsonPath);
-                    if (testCases.size() > 1) {
-                        Log.warn(CLASS_NAME, "存在{}条类名为{}的测试用例,默认取最后一条", testCases.size(), className);
-                    } else {
-                        for (TestCase targetTestCase : testCases.toJavaList(TestCase.class)) {
-                            testCase = targetTestCase;
-                        }
-                    }
-                    if (testCase != null) {
-                        Log.info(CLASS_NAME, "{}({})测试用例加载成功", testCase.getName(), className);
-                    }
+                JSONArray testCases = (JSONArray) JSONPath.read(testCaseJson, jsonPath);
+                if (testCases.size() < 1) {
+                    Log.error(CLASS_NAME, "测试用例数据不存在");
+                    throw new IllegalArgumentException("测试用例数据不存在");
+                } else if (testCases.size() > 1) {
+                    Log.warn(CLASS_NAME, "存在{}条类名为{}的测试用例,默认取最后一条", testCases.size(), className);
                 } else {
-                    throw new IllegalArgumentException("找不到测试用例数据");
+                    for (TestCase targetTestCase : testCases.toJavaList(TestCase.class)) {
+                        testCase = targetTestCase;
+                    }
+                }
+                if (testCase != null) {
+                    Log.info(CLASS_NAME, "{}({})测试用例加载成功", testCase.getName(), className);
                 }
             } else {
+                Log.error(CLASS_NAME, "测试用例加载失败,文件路径为空");
                 throw new IllegalArgumentException("测试用例加载失败,文件路径为空");
             }
         } catch (JSONException e) {

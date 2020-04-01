@@ -18,7 +18,7 @@ public class Entity implements Serializable {
     private String method;
     private String url;
     private Map<String, Object> urlParam;
-    private Map<String, String> header;
+    private Map<String, Object> header;
     private Map<String, Object> queryMap;
     private String requestBody;
     private String assertion;
