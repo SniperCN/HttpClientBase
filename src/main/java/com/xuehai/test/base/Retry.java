@@ -11,9 +11,12 @@ import org.testng.ITestResult;
  */
 public class Retry implements IRetryAnalyzer {
     private static final String CLASS_NAME = Retry.class.getName();
-    private static final int MAX_RETRY_COUNT = (int) Configuration.getConfig().get("max-retry-count");
+    private static final int MAX_RETRY_COUNT;
     private int count = 1;
 
+    static {
+        MAX_RETRY_COUNT = Configuration.getConfig().get("max-retry-count") != null ? (int) Configuration.getConfig().get("max-retry-count") : 3;
+    }
 
     @Override
     public boolean retry(ITestResult result) {
