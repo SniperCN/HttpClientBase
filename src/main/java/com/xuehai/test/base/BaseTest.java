@@ -46,8 +46,12 @@ public class BaseTest {
         if (casePathMap != null) {
             String suiteName = iTestContext.getSuite().getName();
             Log.debug(CLASS_NAME, "获取测试用例路径,当前SuiteName:{}", suiteName);
-            String casePath = (String) ((Map)casePathMap).get(suiteName);
-            testCase = parseTestCase(casePath, getClass().getName());
+            if (((Map) casePathMap).get(suiteName) != null) {
+                List<String> casePathList = (List<String>) ((Map)casePathMap).get(suiteName);
+                testCase = loadTestCase(casePathList, getClass().getName());
+            } else {
+                throw new IllegalArgumentException("TestSuite<" + suiteName + ">用例配置不正确");
+            }
             if (baseClient == null) {
                 baseClient = BaseClient.getInstance();
             }
@@ -68,6 +72,28 @@ public class BaseTest {
         Log.info(CLASS_NAME, "测试类: {} 执行完毕", getClass());
     }
 
+    protected TestCase loadTestCase(List<String> casePathList, String className) {
+        Log.info(CLASS_NAME, "开始加载用例数据,用例文件路径:{},待加载用例ClassName:{}",
+                JSON.toJSONString(casePathList), className);
+        TestCase testCase = null;
+        try {
+            for (String casePath : casePathList) {
+                testCase = loadTestCase(casePath, className);
+                if (testCase != null) {
+                    Log.info(CLASS_NAME, "{}({})用例数据加载成功", testCase.getName(), className);
+                    break;
+                }
+            }
+        } catch (JSONException e) {
+            Log.error(CLASS_NAME, "用例数据加载失败", e);
+        } finally {
+            if (testCase == null) {
+                Log.info(CLASS_NAME, "{}({})用例数据加载失败", testCase.getName(), className);
+            }
+        }
+        return testCase;
+    }
+
     /**
      * @description:    获取TestCase实体
      * @param filePath  测试用例文件路径
@@ -76,33 +102,27 @@ public class BaseTest {
      * @author Sniper
      * @date 2019/3/13 17:02
      */
-    protected TestCase parseTestCase(String filePath, String className) {
-        Log.info(CLASS_NAME, "开始加载测试用例,用例文件路径:{},待加载用例ClassName:{}", filePath, className);
+    protected TestCase loadTestCase(String filePath, String className) {
+        Log.info(CLASS_NAME, "加载用例数据,用例文件路径:{},待加载用例ClassName:{}", filePath, className);
         TestCase testCase = null;
-        try {
-            if (!StringUtils.isEmpty(filePath)) {
-                String testCaseJson = FileUtil.read(filePath, "UTF-8");
-                String jsonPath = "$[className='" + className + "']";
-                JSONArray testCases = (JSONArray) JSONPath.read(testCaseJson, jsonPath);
-                if (testCases.size() < 1) {
-                    Log.error(CLASS_NAME, "测试用例数据不存在");
-                    throw new IllegalArgumentException("测试用例数据不存在");
-                } else if (testCases.size() > 1) {
-                    Log.warn(CLASS_NAME, "存在{}条类名为{}的测试用例,默认取最后一条", testCases.size(), className);
-                } else {
-                    for (TestCase targetTestCase : testCases.toJavaList(TestCase.class)) {
-                        testCase = targetTestCase;
-                    }
-                }
-                if (testCase != null) {
-                    Log.info(CLASS_NAME, "{}({})测试用例加载成功", testCase.getName(), className);
-                }
-            } else {
-                Log.error(CLASS_NAME, "测试用例加载失败,文件路径为空");
-                throw new IllegalArgumentException("测试用例加载失败,文件路径为空");
+        if (!StringUtils.isEmpty(filePath)) {
+            String testCaseJson = FileUtil.read(filePath, "UTF-8");
+            String jsonPath = "$[className='" + className + "']";
+            JSONArray testCases = (JSONArray) JSONPath.read(testCaseJson, jsonPath);
+            if (testCases.size() > 1) {
+                Log.warn(CLASS_NAME, "存在{}条类名为{}的测试用例,默认取最后一条", testCases.size(), className);
             }
-        } catch (JSONException e) {
-            Log.error(CLASS_NAME, "测试用例加载失败", e);
+            for (TestCase targetTestCase : testCases.toJavaList(TestCase.class)) {
+                testCase = targetTestCase;
+            }
+        } else {
+            Log.error(CLASS_NAME, "用例数据加载失败,文件路径为空字符串");
+            throw new IllegalArgumentException("用例数据加载失败,文件路径不允许为空字符串");
+        }
+        if (testCase != null) {
+            Log.info(CLASS_NAME, "用例ClassName:{}数据加载成功,当前路径:{}", className, filePath);
+        } else {
+            Log.info(CLASS_NAME, "{}中未包含用例ClassName:{}数据", filePath, className);
         }
         return testCase;
     }

@@ -210,7 +210,8 @@ public class BaseClient {
                     response = sendHttpPatch(url, requestBody, header);
                     break;
                 default:
-                    throw new IllegalArgumentException("未定义的Method类型: " + method);
+                    Log.error(CLASS_NAME, "未定义的Method类型: \"{}\"", method);
+                    throw new IllegalArgumentException("未定义的Method类型: \"" + method + "\"");
             }
         } finally {
             if (mockServerClient != null ) {
