@@ -84,11 +84,14 @@ public class BaseTest {
                     break;
                 }
             }
+            if (testCase == null) {
+                throw new IllegalArgumentException("用例数据加载失败,用例数据不允许为空");
+            }
         } catch (JSONException e) {
             Log.error(CLASS_NAME, "用例数据加载失败", e);
         } finally {
             if (testCase == null) {
-                Log.info(CLASS_NAME, "{}({})用例数据加载失败", testCase.getName(), className);
+                Log.error(CLASS_NAME, "{}用例数据加载失败", className);
             }
         }
         return testCase;
@@ -137,8 +140,10 @@ public class BaseTest {
      */
     protected Iterator<Object[]> initData() {
         List<Object[]> dataList = new ArrayList<>();
-        List<Map<String, Entity>> list = testCase.getEntityList();
-        list.forEach(map -> dataList.add(new Object[]{map}));
+        if (this.testCase != null) {
+            List<Map<String, Entity>> list = testCase.getEntityList();
+            list.forEach(map -> dataList.add(new Object[]{map}));
+        }
         return dataList.iterator();
     }
 
