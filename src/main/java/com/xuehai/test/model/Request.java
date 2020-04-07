@@ -14,10 +14,10 @@ import java.util.Map;
 public class Request {
     private String url;
     private String method;
-    private Map<String, String> header;
+    private Map<String, Object> header;
     private String body;
 
-    public Request(String url, String method, Map<String, String> header, String body) {
+    public Request(String url, String method, Map<String, Object> header, String body) {
         this.url = url;
         this.method = method;
         this.header = header;

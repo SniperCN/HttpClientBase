@@ -16,12 +16,12 @@ public class Response {
 
     private int statusCode;
     private String message;
-    private Map<String, String> header;
+    private Map<String, Object> header;
     @JSONField(name = "isError")
     private boolean isError;
     private ResponseDTO responseDTO;
 
-    public Response(int statusCode, String message, Map<String, String> header, boolean isError, ResponseDTO responseDTO) {
+    public Response(int statusCode, String message, Map<String, Object> header, boolean isError, ResponseDTO responseDTO) {
         this.statusCode = statusCode;
         this.message = message;
         this.header = header;

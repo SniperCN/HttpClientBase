@@ -19,13 +19,8 @@ import java.util.*;
 public class BaseTest {
 
     private static final String CLASS_NAME = BaseTest.class.getName();
-    private static BaseClient baseClient;
     private TestCase testCase;
     private ITestContext iTestContext;
-
-    protected BaseClient getBaseClient() {
-        return baseClient;
-    }
 
     protected ITestContext getITestContext() {
         return this.iTestContext;
@@ -52,9 +47,6 @@ public class BaseTest {
             } else {
                 throw new IllegalArgumentException("TestSuite<" + suiteName + ">用例配置不正确");
             }
-            if (baseClient == null) {
-                baseClient = BaseClient.getInstance();
-            }
         } else {
             throw new IllegalArgumentException("config.yaml缺少case-path配置项");
         }
@@ -72,7 +64,7 @@ public class BaseTest {
         Log.info(CLASS_NAME, "测试类: {} 执行完毕", getClass());
     }
 
-    protected TestCase loadTestCase(List<String> casePathList, String className) {
+    private TestCase loadTestCase(List<String> casePathList, String className) {
         Log.info(CLASS_NAME, "开始加载用例数据,用例文件路径:{},待加载用例ClassName:{}",
                 JSON.toJSONString(casePathList), className);
         TestCase testCase = null;
@@ -105,7 +97,7 @@ public class BaseTest {
      * @author Sniper
      * @date 2019/3/13 17:02
      */
-    protected TestCase loadTestCase(String filePath, String className) {
+    private TestCase loadTestCase(String filePath, String className) {
         Log.info(CLASS_NAME, "加载用例数据,用例文件路径:{},待加载用例ClassName:{}", filePath, className);
         TestCase testCase = null;
         if (!StringUtils.isEmpty(filePath)) {

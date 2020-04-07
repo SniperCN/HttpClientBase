@@ -51,14 +51,11 @@ import java.util.regex.Pattern;
  */
 public class BaseClient {
     private static final String CLASS_NAME = BaseClient.class.getName();
-    private static RequestConfig requestConfig;
-    private static BaseClient instance;
+    private static BaseClient instance = new BaseClient();
+
+    private BaseClient(){}
 
     public static BaseClient getInstance() {
-        if (instance == null) {
-            instance = new BaseClient();
-            loadHttpClientConfig();
-        }
         return instance;
     }
 
@@ -69,7 +66,8 @@ public class BaseClient {
      * @author Sniper
      * @date 2019/11/1 10:03
      */
-    public static void loadHttpClientConfig() {
+    private RequestConfig loadHttpClientConfig() {
+        final RequestConfig[] requestConfig = new RequestConfig[1];
         Map httpConfig = (Map) Configuration.getConfig().get("http-client");
         if (httpConfig != null) {
             RequestConfig.Builder builder = RequestConfig.custom();
@@ -101,9 +99,10 @@ public class BaseClient {
                         break;
                     default : break;
                 }
-                requestConfig = builder.build();
+                requestConfig[0] = builder.build();
             });
         }
+        return requestConfig[0];
     }
 
     /**
@@ -221,34 +220,34 @@ public class BaseClient {
         return response;
     }
 
-    public Response sendHttpGet(String httpUrl) {
+    private Response sendHttpGet(String httpUrl) {
         HttpGet httpGet = new HttpGet(httpUrl);
         return sendHttpRequest(httpGet, new HashMap<>());
     }
 
-    public Response sendHttpGet(String httpUrl, Map<String, Object> header) {
+    private Response sendHttpGet(String httpUrl, Map<String, Object> header) {
         HttpGet httpGet = new HttpGet(httpUrl);
         return sendHttpRequest(httpGet, header);
     }
 
-    public Response sendHttpPost(String httpUrl) {
+    private Response sendHttpPost(String httpUrl) {
         HttpPost httpPost = new HttpPost(httpUrl);
         return sendHttpRequest(httpPost, new HashMap<>());
     }
 
-    public Response sendHttpPost(String httpUrl, Map<String, Object> header) {
+    private Response sendHttpPost(String httpUrl, Map<String, Object> header) {
         HttpPost httpPost = new HttpPost(httpUrl);
         return sendHttpRequest(httpPost, header);
     }
 
-    public Response sendHttpPost(String httpUrl, String body, Map<String, Object> header) {
+    private Response sendHttpPost(String httpUrl, String body, Map<String, Object> header) {
         HttpPost httpPost = new HttpPost(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
         httpPost.setEntity(stringEntity);
         return sendHttpRequest(httpPost, header);
     }
 
-    public Response sendHttpPost(String httpUrl, Map<String, File> map, Map<String, Object> header) {
+    private Response sendHttpPost(String httpUrl, Map<String, File> map, Map<String, Object> header) {
         HttpPost httpPost = new HttpPost(httpUrl);
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();
         for(Map.Entry<String, File> entry : map.entrySet()){
@@ -262,7 +261,7 @@ public class BaseClient {
         return sendHttpRequest(httpPost, header);
     }
 
-    public Response sendHttpDelete(String httpUrl) {
+    private Response sendHttpDelete(String httpUrl) {
         HttpDelete httpDelete = new HttpDelete(httpUrl);
         return sendHttpRequest(httpDelete, new HashMap<>());
     }
@@ -272,7 +271,7 @@ public class BaseClient {
         return sendHttpRequest(httpDelete, header);
     }
 
-    public Response sendHttpDelete(String httpUrl, String body, Map<String, Object> header) {
+    private Response sendHttpDelete(String httpUrl, String body, Map<String, Object> header) {
         HttpDelete httpDelete = new HttpDelete(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
         httpDelete.setEntity(stringEntity);
@@ -281,34 +280,34 @@ public class BaseClient {
 
 
 
-    public Response sendHttpPut(String httpUrl) {
+    private Response sendHttpPut(String httpUrl) {
         HttpPut httpPut = new HttpPut(httpUrl);
         return sendHttpRequest(httpPut, new HashMap<>());
     }
 
-    public Response sendHttpPut(String httpUrl, Map<String, Object> header) {
+    private Response sendHttpPut(String httpUrl, Map<String, Object> header) {
         HttpPut httpPut = new HttpPut(httpUrl);
         return sendHttpRequest(httpPut, header);
     }
 
-    public Response sendHttpPut(String httpUrl, String body, Map<String, Object> header) {
+    private Response sendHttpPut(String httpUrl, String body, Map<String, Object> header) {
         HttpPut httpPut = new HttpPut(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
         httpPut.setEntity(stringEntity);
         return sendHttpRequest(httpPut, header);
     }
 
-    public Response sendHttpPatch(String httpUrl) {
+    private Response sendHttpPatch(String httpUrl) {
         HttpPatch httpPatch = new HttpPatch(httpUrl);
         return sendHttpRequest(httpPatch, new HashMap<>());
     }
 
-    public Response sendHttpPatch(String httpUrl, Map<String, Object> header) {
+    private Response sendHttpPatch(String httpUrl, Map<String, Object> header) {
         HttpPatch httpPatch = new HttpPatch(httpUrl);
         return sendHttpRequest(httpPatch, header);
     }
 
-    public Response sendHttpPatch(String httpUrl, String body, Map<String, Object> header) {
+    private Response sendHttpPatch(String httpUrl, String body, Map<String, Object> header) {
         HttpPatch httpPatch = new HttpPatch(httpUrl);
         StringEntity stringEntity = new StringEntity(body, "UTF-8");
         httpPatch.setEntity(stringEntity);
@@ -322,7 +321,7 @@ public class BaseClient {
         try {
             try {
                 httpClient = httpClientInit(httpRequest.getURI().getScheme());
-                httpRequest.setConfig(requestConfig);
+                httpRequest.setConfig(loadHttpClientConfig());
                 for (Map.Entry<String, Object> entry : header.entrySet()) {
                     String key = entry.getKey();
                     String value = String.valueOf(entry.getValue());
@@ -382,7 +381,7 @@ public class BaseClient {
             try {
                 httpClient = httpClientInit(httpUrl.startsWith("http") ? "http" : "https");
                 HttpGet httpGet = new HttpGet(httpUrl);
-                httpGet.setConfig(requestConfig);
+                httpGet.setConfig(loadHttpClientConfig());
                 Request request = new Request(httpGet.getRequestLine().getUri(), httpGet.getMethod(),
                         parseHeader(httpGet.getAllHeaders()), null);
                 Log.info(CLASS_NAME, "请求信息: {}", JSON.toJSONString(request, SerializerFeature.WriteMapNullValue));
@@ -411,7 +410,7 @@ public class BaseClient {
      * @author Sniper
      * @date 2020/3/26 13:01
      */
-    private static CloseableHttpClient httpClientInit(String protocol) {
+    private CloseableHttpClient httpClientInit(String protocol) {
         CloseableHttpClient httpClient = HttpClientBuilder.create().build();
         if ("https".equals(protocol)) {
             return sslClient();
@@ -426,7 +425,7 @@ public class BaseClient {
      * @author Sniper
      * @date 2020/3/26 13:03
      */
-    private static CloseableHttpClient sslClient() {
+    private CloseableHttpClient sslClient() {
         CloseableHttpClient closeableHttpClient = null;
         try {
             // 在调用SSL之前需要重写验证方法，取消检测SSL
@@ -466,8 +465,8 @@ public class BaseClient {
      * @author Sniper
      * @date 2019/11/1 10:16
      */
-    private static Map<String, String> parseHeader(Header[] headers) {
-        Map<String, String> headerMap = new HashMap<>();
+    private Map<String, Object> parseHeader(Header[] headers) {
+        Map<String, Object> headerMap = new HashMap<>();
         for (Header header : headers) {
             headerMap.put(header.getName(), header.getValue());
         }

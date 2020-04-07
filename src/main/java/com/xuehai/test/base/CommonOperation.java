@@ -21,11 +21,6 @@ import static io.qameta.allure.Allure.*;
  */
 public class CommonOperation {
     private static final String CLASS_NAME = CommonOperation.class.getName();
-    private BaseClient baseClient;
-
-    protected CommonOperation(BaseClient baseClient) {
-        this.baseClient = baseClient;
-    }
 
     /**
      * @description: 发送http请求,并验证响应数据
@@ -58,7 +53,7 @@ public class CommonOperation {
         }
         parameter("ITestContext<"+ entity.getDescription() + "> ", contextJson.toJSONString());
         parameter("Entity<"+ entity.getDescription() + "> ", JSON.toJSONString(entity));
-        return baseClient.sendHttpRequest(context, entity);
+        return BaseClient.getInstance().sendHttpRequest(context, entity);
     }
 
     /**
@@ -71,7 +66,7 @@ public class CommonOperation {
      * @date 2019/11/1 10:23
      */
     protected void download(String httpUrl, String savePath) {
-        baseClient.download(httpUrl, savePath);
+        BaseClient.getInstance().download(httpUrl, savePath);
     }
 
     /**
