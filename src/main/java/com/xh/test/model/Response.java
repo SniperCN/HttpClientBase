@@ -1,4 +1,4 @@
-package com.xuehai.test.model;
+package com.xh.test.model;
 
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;

@@ -1,10 +1,10 @@
-package com.xuehai.test.base;
+package com.xh.test.base;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.xuehai.test.model.*;
-import com.xuehai.test.utils.CommonUtil;
-import com.xuehai.test.utils.FileUtil;
+import com.xh.test.model.*;
+import com.xh.test.utils.CommonUtil;
+import com.xh.test.utils.FileUtil;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;

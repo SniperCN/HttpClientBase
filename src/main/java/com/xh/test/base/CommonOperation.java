@@ -1,12 +1,12 @@
-package com.xuehai.test.base;
+package com.xh.test.base;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
-import com.xuehai.test.model.Entity;
-import com.xuehai.test.model.Response;
-import com.xuehai.test.model.ResponseDTO;
-import com.xuehai.test.utils.AssertionUtil;
+import com.xh.test.model.Entity;
+import com.xh.test.model.Response;
+import com.xh.test.model.ResponseDTO;
+import com.xh.test.utils.AssertionUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.testng.ITestContext;
 import java.util.HashMap;

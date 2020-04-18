@@ -1,4 +1,4 @@
-package com.xuehai.test.model;
+package com.xh.test.model;
 
 import lombok.Data;
 

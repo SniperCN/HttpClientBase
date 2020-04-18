@@ -1,8 +1,8 @@
-package com.xuehai.test.utils;
+package com.xh.test.utils;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.xuehai.test.base.Log;
+import com.xh.test.base.Log;
 
 import java.sql.*;
 

@@ -1,4 +1,4 @@
-package com.xuehai.test.base;
+package com.xh.test.base;
 
 import org.testng.IRetryAnalyzer;
 import org.testng.ITestResult;

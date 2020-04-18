@@ -1,4 +1,4 @@
-package com.xuehai.test.base;
+package com.xh.test.base;
 
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 

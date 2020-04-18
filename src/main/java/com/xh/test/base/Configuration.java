@@ -1,7 +1,7 @@
-package com.xuehai.test.base;
+package com.xh.test.base;
 
 
-import com.xuehai.test.utils.FileUtil;
+import com.xh.test.utils.FileUtil;
 import java.util.List;
 import java.util.Map;
 

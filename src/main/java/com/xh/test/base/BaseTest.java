@@ -1,9 +1,9 @@
-package com.xuehai.test.base;
+package com.xh.test.base;
 
 import com.alibaba.fastjson.*;
-import com.xuehai.test.model.Entity;
-import com.xuehai.test.model.TestCase;
-import com.xuehai.test.utils.FileUtil;
+import com.xh.test.model.Entity;
+import com.xh.test.model.TestCase;
+import com.xh.test.utils.FileUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.testng.ITestContext;
 import org.testng.annotations.AfterClass;

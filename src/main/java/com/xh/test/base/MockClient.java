@@ -1,8 +1,8 @@
-package com.xuehai.test.base;
+package com.xh.test.base;
 
-import com.xuehai.test.model.MockForward;
-import com.xuehai.test.model.MockRequest;
-import com.xuehai.test.model.MockResponse;
+import com.xh.test.model.MockForward;
+import com.xh.test.model.MockRequest;
+import com.xh.test.model.MockResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.*;

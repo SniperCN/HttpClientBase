@@ -1,6 +1,6 @@
-package com.xuehai.test.utils;
+package com.xh.test.utils;
 
-import com.xuehai.test.base.Log;
+import com.xh.test.base.Log;
 import org.apache.commons.codec.digest.DigestUtils;
 import java.io.*;
 import java.net.URLDecoder;

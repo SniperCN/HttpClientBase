@@ -1,4 +1,4 @@
-package com.xuehai.test.utils;
+package com.xh.test.utils;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -6,7 +6,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.*;
-import com.xuehai.test.base.Log;
+import com.xh.test.base.Log;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import java.util.ArrayList;

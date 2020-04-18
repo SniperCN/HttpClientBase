@@ -1,7 +1,7 @@
-package com.xuehai.test.base;
+package com.xh.test.base;
 
-import com.xuehai.test.model.Entity;
-import com.xuehai.test.model.ResponseDTO;
+import com.xh.test.model.Entity;
+import com.xh.test.model.ResponseDTO;
 
 /**
  * @ClassName AssertionHandler

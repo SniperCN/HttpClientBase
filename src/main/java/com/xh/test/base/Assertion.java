@@ -1,4 +1,4 @@
-package com.xuehai.test.base;
+package com.xh.test.base;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONException;
