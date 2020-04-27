@@ -11,17 +11,18 @@ import org.testng.ITestResult;
  */
 public class Retry implements IRetryAnalyzer {
     private static final String CLASS_NAME = Retry.class.getName();
-    private static final int MAX_RETRY_COUNT;
+    private static final int MAX_EXECUTE_COUNT;
     private int count = 1;
 
     static {
-        MAX_RETRY_COUNT = Configuration.getConfig().get("max-retry-count") != null ? (int) Configuration.getConfig().get("max-retry-count") : 3;
+        Object maxExecuteCount = Configuration.getConfig().get("max-execute-count");
+        MAX_EXECUTE_COUNT =  maxExecuteCount!= null ? (int) maxExecuteCount : 3;
     }
 
     @Override
     public boolean retry(ITestResult result) {
-        if (count < MAX_RETRY_COUNT) {
-            Log.info(CLASS_NAME, "{}执行失败重跑,当前重跑次数: {}", result.getMethod().getMethodName(), count);
+        if (count < MAX_EXECUTE_COUNT) {
+            Log.info(CLASS_NAME, "{}第{}次执行失败,即将重试第{}次", result.getMethod().getMethodName(), count, count + 1);
             count ++;
             return true;
         } else {

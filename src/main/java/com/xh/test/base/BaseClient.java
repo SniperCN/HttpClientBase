@@ -1,10 +1,15 @@
 package com.xh.test.base;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONException;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.xh.test.model.*;
+import com.xh.test.model.Assertion;
+import com.xh.test.utils.AssertionUtil;
 import com.xh.test.utils.CommonUtil;
 import com.xh.test.utils.FileUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -28,7 +33,6 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.mockserver.client.MockServerClient;
 import org.testng.ITestContext;
-
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -40,8 +44,10 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import static io.qameta.allure.Allure.parameter;
 
 /**
  * @ClassName BaseClient
@@ -52,6 +58,7 @@ import java.util.regex.Pattern;
 public class BaseClient {
     private static final String CLASS_NAME = BaseClient.class.getName();
     private static BaseClient instance = new BaseClient();
+    private String protocol;
 
     private BaseClient(){}
 
@@ -106,49 +113,121 @@ public class BaseClient {
     }
 
     /**
+     * @description: 发送http请求,并验证响应数据
+     * @param iTestContext      testNG ITestContext
+     * @param entity            请求实体
+     * @param assertionMap      测试类断言Map<String, AssertionHandler>
+     * @return Response
+     * @throws
+     * @author Sniper
+     * @date 2019/10/9 14:14
+     */
+    public Response sendHttpRequest(ITestContext iTestContext, Entity entity, Map<String, Object> dataMap,
+                                       HashMap<String, AssertionHandler> assertionMap) {
+        Response response = sendHttpRequest(iTestContext, entity, dataMap);
+        assertThat(response, assertionMap, entityMerge(iTestContext, entity, dataMap));
+        return response;
+    }
+
+
+
+    /**
+     * @description: 发送http请求
+     * @param iTestContext      testNG ITestContext
+     * @param entity 请求实体
+     * @return Response
+     * @throws
+     * @author Sniper
+     * @date 2019/10/9 14:13
+     */
+    public Response sendHttpRequest(ITestContext iTestContext, Entity entity, Map<String, Object> dataMap) {
+        if (entity != null) {
+            Entity mergedEntity = entityMerge(iTestContext, entity, dataMap);
+            JSONObject contextJson = new JSONObject();
+            Set<String> attrName = iTestContext.getAttributeNames();
+            for (String name : attrName) {
+                Object value  = iTestContext.getAttribute(name);
+                contextJson.put(name, value);
+            }
+            parameter("ITestContext<"+ entity.getDescription() + "> ", contextJson.toJSONString());
+            parameter("Entity<"+ entity.getDescription() + "> ", JSON.toJSONString(mergedEntity));
+            return BaseClient.getInstance().sendHttpRequest(iTestContext, mergedEntity);
+        } else {
+            Log.error(CLASS_NAME, "Entity不允许为null");
+            throw new IllegalArgumentException("Entity不允许为null");
+        }
+    }
+
+    /**
+     * @description: 响应code断言,入库断言
+     * @param response            response实体
+     * @param assertionHandlerMap 断言Map<action名称, AssertionHandler实现类>
+     * @param entity              请求实体
+     * @return void
+     * @throws
+     * @author Sniper
+     * @date 2019/10/17 17:01
+     */
+    public void assertThat(Response response, HashMap<String, AssertionHandler> assertionHandlerMap, Entity entity) {
+        Assertion assertion = entity.getAssertion();
+        AssertionUtil.assertThat("StatusCode校验", response.getStatusCode(),
+                assertion.getStatusCode());
+        AssertionUtil.assertThat("Message校验", response.getMessage(),
+                assertion.getMessage());
+        ResponseDTO responseDTO = response.getResponseDTO();
+        String action = assertion.getAction();
+        if (!StringUtils.isEmpty(action)) {
+            assertionHandlerMap.get(action).assertThat(responseDTO, entity);
+        } else {
+            AssertionUtil.assertThat(responseDTO, assertion);
+        }
+    }
+
+    /**
      * @description:                发送http请求
      * @param entity                请求实体
-     * @return java.lang.String
+     * @return Response
      * @throws
      * @author Sniper
      * @date 2019/4/18 10:50
      */
-    public Response sendHttpRequest(ITestContext context, Entity entity) {
+    private Response sendHttpRequest(ITestContext context, Entity entity) {
         Response response;
         MockServerClient mockServerClient = null;
         try {
             String method = entity.getMethod();
             String serverType = entity.getServerType();
             String url = entity.getUrl();
-            Map<String, Object> urlParam = entity.getUrlParam();
+            Map<String, Object> urlParamMap = entity.getUrlParamMap();
             Map<String, Object> queryMap = entity.getQueryMap();
             Map<String, Object> header = entity.getHeader();
-            String requestBody = entity.getRequestBody();
+            String requestBody = JSON.toJSONString(entity.getRequestBody());
             boolean isSign = entity.isSign();
             boolean isMock = entity.isMock();
 
             Map serverTypeMap = (Map) Configuration.getConfig().get("server-type");
             if(serverTypeMap != null) {
-                String host = (String) serverTypeMap.get(serverType);
-                url = host + url;
+                Map serverAttrMap = (Map) serverTypeMap.get(serverType);
+                if (serverAttrMap != null) {
+                    String host = String.valueOf(serverAttrMap.get("host"));
+                    protocol = String.valueOf(serverAttrMap.get("protocol"));
+                    url = host + url;
+                }
             } else {
                 throw new IllegalArgumentException("config.yaml缺少serverType配置");
             }
 
-            String protocol = (String) Configuration.getConfig().get("protocol");
             if (protocol != null) {
-                if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                    if ("http".equals(protocol)) {
-                        if (!url.startsWith("http://")) {
-                            url = "http://" + url;
-                        }
-                    } else if ("https".equals(protocol)) {
-                        if (!url.startsWith("https://")) {
-                            url = "https://" + url;
-                        }
-                    } else {
-                        throw new IllegalArgumentException("错误的协议配置");
+                if ("http".equals(protocol)) {
+                    if (!url.startsWith("http://")) {
+                        url = "http://" + url;
                     }
+                } else if ("https".equals(protocol)) {
+                    if (!url.startsWith("https://")) {
+                        url = "https://" + url;
+                    }
+                } else {
+                    throw new IllegalArgumentException("config.yaml错误的协议配置,serverType:" + serverType + ",protocol:" + protocol);
                 }
             } else {
                 throw new IllegalArgumentException("config.yaml缺少protocol配置");
@@ -159,8 +238,8 @@ public class BaseClient {
             while (matcher.find()) {
                 String temp = matcher.group();
                 String dataKey = temp.replace("{", "").replace("}", "");
-                if (urlParam != null && urlParam.size() > 0) {
-                    Object value = urlParam.get(dataKey);
+                if (urlParamMap != null && urlParamMap.size() > 0) {
+                    Object value = urlParamMap.get(dataKey);
                     if (value != null && !"".equals(value)) {
                         url = url.replace(temp, String.valueOf(value));
                     }
@@ -342,17 +421,22 @@ public class BaseClient {
                     bodyInfo = EntityUtils.toString(httpEntity);
                 }
                 Request request = new Request(httpRequest.getRequestLine().getUri(), httpRequest.getMethod(),
-                        parseHeader(httpRequest.getAllHeaders()), bodyInfo);
+                        parseHeader(httpRequest.getAllHeaders()), JSON.toJavaObject(JSON.parseObject(bodyInfo), Map.class));
                 Log.info(CLASS_NAME, "请求信息: {}", JSON.toJSONString(request, SerializerFeature.WriteMapNullValue));
                 httpResponse = httpClient.execute(httpRequest);
                 String responseData = EntityUtils.toString(httpResponse.getEntity());
                 ResponseDTO responseDTO;
-                if (responseData.contains("\"code\"") && responseData.contains("\"msg\"") &&
-                        responseData.contains("\"data\"") && responseData.contains("\"desc\"")) {
-                    responseDTO = JSON.parseObject(responseData, ResponseDTO.class);
+                if (responseData.startsWith("{") && responseData.endsWith("}")) {
+                    if (responseData.contains("\"code\"") && responseData.contains("\"msg\"") &&
+                            responseData.contains("\"data\"") && responseData.contains("\"desc\"")) {
+                        responseDTO = JSON.parseObject(responseData, ResponseDTO.class);
+                    } else {
+                        responseDTO = new ResponseDTO(0, "", JSONObject.parseObject(responseData), "");
+                    }
                 } else {
-                    responseDTO = new ResponseDTO(httpResponse.getStatusLine().getStatusCode(), httpResponse.getStatusLine().getReasonPhrase()
-                            , responseData, null);
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("data", responseData);
+                    responseDTO = new ResponseDTO(0, "", map, "");
                 }
                 response = new Response(httpResponse.getStatusLine().getStatusCode(), httpResponse.getStatusLine().getReasonPhrase(),
                         parseHeader(httpResponse.getAllHeaders()), false, responseDTO);
@@ -365,7 +449,7 @@ public class BaseClient {
                     httpClient.close();
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | JSONException e) {
             if (response == null) {
                 response = new Response(0, e.getMessage(), null, true, null);
             }
@@ -456,6 +540,79 @@ public class BaseClient {
         return closeableHttpClient;
     }
 
+    /**
+     * @description: TODO(这里用一句话描述这个方法的作用)
+     * @param  iTestContext testNG iTestContext
+     * @param  entity       请求实体
+     * @param  dataMap      测试数据
+     * @return
+     * @author Sniper
+     * @throws
+     * @date 2020/4/27 15:17
+     */
+    private Entity entityMerge(ITestContext iTestContext, Entity entity, Map<String, Object> dataMap) {
+        JSONObject entityJSONObject = JSONObject.parseObject(JSONObject.toJSONString(entity,
+                SerializerFeature.WriteMapNullValue));
+        JSONObject dataJSONObject = dataMap == null ?
+                null : JSONObject.parseObject(JSONObject.toJSONString(dataMap));
+        if (dataJSONObject != null) {
+            Set<String> keySet = entityJSONObject.keySet();
+            for (String key : keySet) {
+                //根据userId获取user对应的header
+                if ("header".equals(key)) {
+                    JSONObject header = entityJSONObject.getJSONObject(key);
+                    Object headerKey = dataJSONObject.get("headerKey");
+                    if (headerKey != null) {
+                        Object userHeader = iTestContext.getAttribute(String.valueOf(headerKey));
+                        if (userHeader != null) {
+                            header.putAll((Map<String, Object>) userHeader);
+                        }
+                        Object dataHeader = dataJSONObject.get(key);
+                        if (dataHeader != null) {
+                            header.putAll((Map<String, Object>) dataHeader);
+                        }
+                    }
+                } else if ("urlParamMap".equals(key) || "queryMap".equals(key) || "requestBody".equals(key) ||
+                            "assertion".equals(key) || "mockDTO".equals(key)) {
+                    JSONObject partEntity = entityJSONObject.getJSONObject(key);
+                    JSONObject partData = dataJSONObject.getJSONObject(key);
+                    if (partEntity != null) {
+                        Set<String> partEntityKeySet = partEntity.keySet();
+                        for (String partEntityKey : partEntityKeySet) {
+                            entityMerge(iTestContext, partEntity, partData, partEntityKey);
+                        }
+                    }
+                } else {
+                    entityMerge(iTestContext, entityJSONObject, dataJSONObject, key);
+                }
+            }
+        }
+        return JSON.toJavaObject(entityJSONObject, Entity.class);
+    }
+    
+    /**
+     * @description: 实体字段值合并,优先数据,其次testNG iTestContext
+     * @param  iTestContext testNG iTestContext
+     * @param  entity   局部请求实体
+     * @param  data     局部测试数据
+     * @param  key      字段
+     * @return
+     * @author Sniper
+     * @throws 
+     * @date 2020/4/27 15:13
+     */
+    private void entityMerge(ITestContext iTestContext, JSONObject entity, JSONObject data, String key) {
+        //合并iTestContext的entity字段值
+        Object iTestContextValue = iTestContext.getAttribute(key);
+        if (iTestContextValue != null) {
+            entity.put(key, iTestContextValue);
+        }
+        //合并dataMap的entity字段值
+        if (data !=null && data.containsKey(key)) {
+            Object dataValue = data.get(key);
+            entity.put(key, dataValue);
+        }
+    }
 
     /**
      * @description: Header[]转Map

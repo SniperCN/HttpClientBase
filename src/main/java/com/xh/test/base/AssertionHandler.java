@@ -11,6 +11,6 @@ import com.xh.test.model.ResponseDTO;
  */
 public interface AssertionHandler {
     
-    void assertion(ResponseDTO responseDTO, Entity entity);
+    void assertThat(ResponseDTO responseDTO, Entity entity);
 
 }

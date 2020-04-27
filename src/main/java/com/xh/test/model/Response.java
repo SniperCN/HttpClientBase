@@ -1,8 +1,7 @@
 package com.xh.test.model;
 
-import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
-
+import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -12,12 +11,11 @@ import java.util.Map;
  * @Date 2019/10/31 13:16
  */
 @Data
-public class Response {
-
+public class Response implements Serializable {
+    private static final long serialVersionUID = -4708760907007715009L;
     private int statusCode;
     private String message;
     private Map<String, Object> header;
-    @JSONField(name = "isError")
     private boolean isError;
     private ResponseDTO responseDTO;
 

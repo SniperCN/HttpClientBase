@@ -3,7 +3,7 @@ package com.xh.test.utils;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.JSONPath;
-import com.xh.test.base.Assertion;
+import com.xh.test.model.Assertion;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
 import java.util.List;
@@ -26,10 +26,10 @@ public class AssertionUtil {
      * @date 2019/5/15 16:28
      */
     public static void assertThat(Object actual, Assertion assertion) {
-        Object exceptDTO = assertion.responseDTO();
+        Object exceptDTO = assertion.getResponseDTO();
         Object actualDTO = actual;
-        String jsonPath = assertion.jsonPath();
-        List<String> keys = assertion.assertionKeys();
+        String jsonPath = assertion.getJsonPath();
+        List<String> keys = assertion.getIncludeKeys();
         boolean isSort = assertion.isSort();
         if (!StringUtils.isEmpty(jsonPath)) {
             exceptDTO = JSONPath.eval(exceptDTO, jsonPath);

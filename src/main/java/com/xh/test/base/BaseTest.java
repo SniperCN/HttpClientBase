@@ -2,12 +2,13 @@ package com.xh.test.base;
 
 import com.alibaba.fastjson.*;
 import com.xh.test.model.Entity;
-import com.xh.test.model.TestCase;
 import com.xh.test.utils.FileUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.testng.ITestContext;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -19,16 +20,55 @@ import java.util.*;
 public class BaseTest {
 
     private static final String CLASS_NAME = BaseTest.class.getName();
-    private TestCase testCase;
-    private ITestContext iTestContext;
+    protected static final Map<String, Entity> ENTITY_MAP = new HashMap<>();
+    protected static final Map<String, Object> DATA_MAP = new HashMap<>();
+    protected static ITestContext iTestContext;
 
-    protected ITestContext getITestContext() {
-        return this.iTestContext;
+    @BeforeSuite
+    protected void beforeSuite(ITestContext context) {
+        String suiteName = context.getSuite().getName();
+        iTestContext = context;
+        //初始化entity
+        Map<String, Object> entitySourcePathMap =  (Map<String, Object>) Configuration.getConfig().get("entity-source-path");
+        if (entitySourcePathMap != null) {
+            Object entitySourcePath = entitySourcePathMap.get(suiteName);
+            if (entitySourcePath != null) {
+                List<String> sourcePathList = (List<String>) entitySourcePath;
+                loadEntity(sourcePathList);
+                Log.info(CLASS_NAME, "Entity加载成功");
+            } else {
+                Log.error(CLASS_NAME, "TestSuite<{}> Entity配置不允许为空", suiteName);
+                throw new IllegalArgumentException("TestSuite<" + suiteName + "> Entity配置不允许为空");
+            }
+        } else {
+            Log.error(CLASS_NAME, "entity-source-path配置不允许为空");
+            throw new IllegalArgumentException("entity-source-path配置不允许为空");
+        }
+        //初始化dataProvider
+        Map<String, Object> dataSourcePathMap = (Map<String, Object>) Configuration.getConfig().get("data-source-path");
+        if (dataSourcePathMap != null) {
+            Object dataSourcePath = dataSourcePathMap.get(suiteName);
+            if (dataSourcePath != null) {
+                List<String> sourcePathList = (List<String>) dataSourcePath;
+                loadData(sourcePathList);
+                Log.info(CLASS_NAME, "Data加载成功");
+            } else {
+                Log.error(CLASS_NAME, "TestSuite<{}> Data配置不允许为空", suiteName);
+                throw new IllegalArgumentException("TestSuite<" + suiteName + "> Data配置不允许为空");
+            }
+        } else {
+            Log.error(CLASS_NAME, "data-source-path配置不允许为空");
+            throw new IllegalArgumentException("data-source-path配置不允许为空");
+        }
+        //初始化课堂配置
+        Map<String, Object> classroomConfigMap = (Map<String, Object>) Configuration.getConfig().get("classroom-config");
+        if (classroomConfigMap != null) {
+            classroomConfigMap.forEach(iTestContext::setAttribute);
+        }
     }
 
     /**
-     * @description:            初始化TestCase和HttpClient
-     * @param iTestContext           ITestContext
+     * @description:     测试开始打印日志
      * @return void
      * @author Sniper
      * @date 2019/3/15 17:17
@@ -36,21 +76,6 @@ public class BaseTest {
     @BeforeClass
     protected void beforeBaseClass(ITestContext iTestContext) {
         Log.info(CLASS_NAME, "测试类{}开始执行", getClass());
-        this.iTestContext = iTestContext;
-        Object casePathMap = Configuration.getConfig().get("case-path");
-        if (casePathMap != null) {
-            String suiteName = iTestContext.getSuite().getName();
-            Log.debug(CLASS_NAME, "获取测试用例路径,当前SuiteName:{}", suiteName);
-            if (((Map) casePathMap).get(suiteName) != null) {
-                List<String> casePathList = (List<String>) ((Map)casePathMap).get(suiteName);
-                testCase = loadTestCase(casePathList, getClass().getName());
-            } else {
-                throw new IllegalArgumentException("TestSuite<" + suiteName + ">用例配置不正确");
-            }
-        } else {
-            throw new IllegalArgumentException("config.yaml缺少case-path配置项");
-        }
-
     }
 
     /**
@@ -61,67 +86,94 @@ public class BaseTest {
      */
     @AfterClass
     protected void afterBaseClass(){
-        Log.info(CLASS_NAME, "测试类: {} 执行完毕", getClass());
-    }
-
-    private TestCase loadTestCase(List<String> casePathList, String className) {
-        Log.info(CLASS_NAME, "开始加载用例数据,用例文件路径:{},待加载用例ClassName:{}",
-                JSON.toJSONString(casePathList), className);
-        TestCase testCase = null;
-        try {
-            for (String casePath : casePathList) {
-                testCase = loadTestCase(casePath, className);
-                if (testCase != null) {
-                    Log.info(CLASS_NAME, "{}({})用例数据加载成功", testCase.getName(), className);
-                    break;
-                }
-            }
-            if (testCase == null) {
-                throw new IllegalArgumentException("用例数据加载失败,用例数据不允许为空");
-            }
-        } catch (JSONException e) {
-            Log.error(CLASS_NAME, "用例数据加载失败", e);
-        } finally {
-            if (testCase == null) {
-                Log.error(CLASS_NAME, "{}用例数据加载失败", className);
-            }
-        }
-        return testCase;
+        Log.info(CLASS_NAME, "测试类{}执行完毕", getClass());
     }
 
     /**
-     * @description:    获取TestCase实体
-     * @param filePath  测试用例文件路径
-     * @param className 测试用例对应的测试类类名
-     * @return          返回TestCase实体
+     * @description: 加载测试数据
+     * @param   dataSourcePathList  测试数据源路径列表
+     * @return void
      * @author Sniper
-     * @date 2019/3/13 17:02
+     * @throws
+     * @date 2020/4/27 15:30
      */
-    private TestCase loadTestCase(String filePath, String className) {
-        Log.info(CLASS_NAME, "加载用例数据,用例文件路径:{},待加载用例ClassName:{}", filePath, className);
-        TestCase testCase = null;
-        if (!StringUtils.isEmpty(filePath)) {
-            String testCaseJson = FileUtil.read(filePath, "UTF-8");
-            String jsonPath = "$[className='" + className + "']";
-            JSONArray testCases = (JSONArray) JSONPath.read(testCaseJson, jsonPath);
-            if (testCases.size() > 1) {
-                Log.warn(CLASS_NAME, "存在{}条类名为{}的测试用例,默认取最后一条", testCases.size(), className);
+    public static void loadData(List<String> dataSourcePathList) {
+        dataSourcePathList.forEach(dataSourcePath -> {
+            Map<String, Object> temp = loadData(dataSourcePath);
+            if (temp != null) {
+                DATA_MAP.putAll(temp);
             }
-            for (TestCase targetTestCase : testCases.toJavaList(TestCase.class)) {
-                testCase = targetTestCase;
-            }
-        } else {
-            Log.error(CLASS_NAME, "用例数据加载失败,文件路径为空字符串");
-            throw new IllegalArgumentException("用例数据加载失败,文件路径不允许为空字符串");
-        }
-        if (testCase != null) {
-            Log.info(CLASS_NAME, "用例ClassName:{}数据加载成功,当前路径:{}", className, filePath);
-        } else {
-            Log.info(CLASS_NAME, "{}中未包含用例ClassName:{}数据", filePath, className);
-        }
-        return testCase;
+        });
     }
 
+    /**
+     * @description: 加载测试数据
+     * @param  dataSourcePath   测试数据源路径
+     * @return Map<String, Object>
+     * @author Sniper
+     * @throws
+     * @date 2020/4/27 15:29
+     */
+    public static Map<String, Object> loadData(String dataSourcePath) {
+        try {
+            if (!StringUtils.isEmpty(dataSourcePath)) {
+                String entitySourceData = FileUtil.read(dataSourcePath, "UTF-8");
+                Map<String, Object> dataMap = JSONObject.parseObject(entitySourceData, Map.class);
+                Log.info(CLASS_NAME, "{},Data加载成功", dataSourcePath);
+                return dataMap;
+            } else {
+                return null;
+            }
+        } catch (JSONException e) {
+            Log.error(CLASS_NAME, dataSourcePath + ",Data加载失败", e);
+            return null;
+        }
+    }
+
+    /**
+     * @description: 加载请求实体
+     * @param  entitySourcePathList 请求实体数据源路径列表
+     * @return void
+     * @author Sniper
+     * @throws
+     * @date 2020/4/27 15:28
+     */
+    private void loadEntity(List<String> entitySourcePathList) {
+        entitySourcePathList.forEach(entitySourcePath -> {
+            Map<String, Entity> temp = loadEntity(entitySourcePath);
+            if (temp != null) {
+                ENTITY_MAP.putAll(temp);
+            }
+        });
+    }
+
+    /**
+     * @description: 加载请求实体
+     * @param  entitySourcePath 请求实体数据源路径
+     * @return  Map<String, Entity>
+     * @author Sniper
+     * @throws
+     * @date 2020/4/27 15:27
+     */
+    private Map<String, Entity> loadEntity(String entitySourcePath) {
+        try {
+            if (!StringUtils.isEmpty(entitySourcePath)) {
+                Map<String, Entity> map = new HashMap<>();
+                String entitySourceData = FileUtil.read(entitySourcePath, "UTF-8");
+                JSONObject entityJSONObject = JSONObject.parseObject(entitySourceData);
+                for (String key : entityJSONObject.keySet()) {
+                    map.put(key, JSONObject.toJavaObject(entityJSONObject.getJSONObject(key), Entity.class));
+                }
+                Log.info(CLASS_NAME, "{},Entity加载成功", entitySourcePath);
+                return map;
+            } else {
+                return null;
+            }
+        } catch (JSONException e) {
+            Log.error(CLASS_NAME, entitySourcePath + ",Entity加载失败", e);
+            return null;
+        }
+    }
 
     /**
      * @description:    测试数据初始化
@@ -130,13 +182,50 @@ public class BaseTest {
      * @author Sniper
      * @date 2019/4/22 14:45
      */
-    protected Iterator<Object[]> initData() {
+    protected Iterator<Object[]> dataProviderInit(Method method) {
         List<Object[]> dataList = new ArrayList<>();
-        if (this.testCase != null) {
-            List<Map<String, Entity>> list = testCase.getEntityList();
-            list.forEach(map -> dataList.add(new Object[]{map}));
+        Object dataMapObject = DATA_MAP.get(this.getClass().getName());
+        if (dataMapObject != null) {
+            Map<String, Object> dataMap = (Map<String, Object>) dataMapObject;
+            Object data = dataMap.get(method.getName());
+            if (data instanceof Map) {
+                dataList.add(new Object[]{data});
+            } else if (data instanceof List) {
+                List<Map<String, Object>> list = (List<Map<String, Object>>) data;
+                list.forEach(map -> dataList.add(new Object[]{map}));
+            } else {
+                Log.error(CLASS_NAME, "data数据类型不允许为" + data.getClass());
+                throw new IllegalArgumentException("data数据类型不允许为" + data.getClass());
+            }
+        } else {
+            Log.error(CLASS_NAME, "data不允许为null");
+            throw new IllegalArgumentException("data不允许为null");
         }
         return dataList.iterator();
+    }
+
+    /**
+     * @description: 单条测试数据初始化
+     * @param  methodName 测试方法名
+     * @return  Map<String, Object>
+     * @author Sniper
+     * @throws
+     * @date 2020/4/27 15:25
+     */
+    protected Map<String, Object> sigleDataInit(String methodName) {
+        Object dataMapObject = DATA_MAP.get(this.getClass().getName());
+        if (dataMapObject != null) {
+            Map<String, Object> dataMap = (Map<String, Object>) dataMapObject;
+            Object data = dataMap.get(methodName);
+            if (data instanceof  Map) {
+                return (Map<String, Object>) data;
+            } else {
+                Log.error(CLASS_NAME, "当前只允许Map类型数据,{}的数据类型为: {}", methodName, data.getClass());
+                return null;
+            }
+        } else {
+            return null;
+        }
     }
 
 

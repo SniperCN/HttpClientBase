@@ -1,5 +1,6 @@
 package com.xh.test.model;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 import java.io.Serializable;
 import java.util.Map;
@@ -17,12 +18,15 @@ public class Entity implements Serializable {
     private String serverType;
     private String method;
     private String url;
-    private Map<String, Object> urlParam;
+    private Map<String, Object> urlParamMap;
     private Map<String, Object> header;
     private Map<String, Object> queryMap;
-    private String requestBody;
-    private String assertion;
+    @JSONField(name = "requestBody")
+    private Map<String, Object> requestBody;
+    private Assertion assertion;
+    @JSONField(name = "isSign")
     private boolean isSign;
+    @JSONField(name = "isMock")
     private boolean isMock;
     private MockDTO mockDTO;
 
