@@ -21,13 +21,8 @@ public class Entity implements Serializable {
     private Map<String, Object> urlParamMap;
     private Map<String, Object> header;
     private Map<String, Object> queryMap;
-    @JSONField(name = "requestBody")
     private Map<String, Object> requestBody;
     private Assertion assertion;
     @JSONField(name = "isSign")
     private boolean isSign;
-    @JSONField(name = "isMock")
-    private boolean isMock;
-    private MockDTO mockDTO;
-
 }

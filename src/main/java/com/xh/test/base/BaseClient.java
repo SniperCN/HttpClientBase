@@ -31,7 +31,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
-import org.mockserver.client.MockServerClient;
 import org.testng.ITestContext;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -192,111 +191,85 @@ public class BaseClient {
      * @date 2019/4/18 10:50
      */
     private Response sendHttpRequest(ITestContext context, Entity entity) {
-        Response response;
-        MockServerClient mockServerClient = null;
-        try {
-            String method = entity.getMethod();
-            String serverType = entity.getServerType();
-            String url = entity.getUrl();
-            Map<String, Object> urlParamMap = entity.getUrlParamMap();
-            Map<String, Object> queryMap = entity.getQueryMap();
-            Map<String, Object> header = entity.getHeader();
-            String requestBody = JSON.toJSONString(entity.getRequestBody());
-            boolean isSign = entity.isSign();
-            boolean isMock = entity.isMock();
+        String method = entity.getMethod();
+        String serverType = entity.getServerType();
+        String url = entity.getUrl();
+        Map<String, Object> urlParamMap = entity.getUrlParamMap();
+        Map<String, Object> queryMap = entity.getQueryMap();
+        Map<String, Object> header = entity.getHeader();
+        String requestBody = JSON.toJSONString(entity.getRequestBody());
+        boolean isSign = entity.isSign();
 
-            Map serverTypeMap = (Map) Configuration.getConfig().get("server-type");
-            if(serverTypeMap != null) {
-                Map serverAttrMap = (Map) serverTypeMap.get(serverType);
-                if (serverAttrMap != null) {
-                    String host = String.valueOf(serverAttrMap.get("host"));
-                    protocol = String.valueOf(serverAttrMap.get("protocol"));
-                    url = host + url;
+        Map serverTypeMap = (Map) Configuration.getConfig().get("server-type");
+        if(serverTypeMap != null) {
+            Map serverAttrMap = (Map) serverTypeMap.get(serverType);
+            if (serverAttrMap != null) {
+                String host = String.valueOf(serverAttrMap.get("host"));
+                protocol = String.valueOf(serverAttrMap.get("protocol"));
+                url = host + url;
+            }
+        } else {
+            throw new IllegalArgumentException("config.yaml缺少serverType配置");
+        }
+
+        if (protocol != null) {
+            if ("http".equals(protocol)) {
+                if (!url.startsWith("http://")) {
+                    url = "http://" + url;
+                }
+            } else if ("https".equals(protocol)) {
+                if (!url.startsWith("https://")) {
+                    url = "https://" + url;
                 }
             } else {
-                throw new IllegalArgumentException("config.yaml缺少serverType配置");
+                throw new IllegalArgumentException("config.yaml错误的协议配置,serverType:" + serverType + ",protocol:" + protocol);
             }
+        } else {
+            throw new IllegalArgumentException("config.yaml缺少protocol配置");
+        }
 
-            if (protocol != null) {
-                if ("http".equals(protocol)) {
-                    if (!url.startsWith("http://")) {
-                        url = "http://" + url;
-                    }
-                } else if ("https".equals(protocol)) {
-                    if (!url.startsWith("https://")) {
-                        url = "https://" + url;
-                    }
-                } else {
-                    throw new IllegalArgumentException("config.yaml错误的协议配置,serverType:" + serverType + ",protocol:" + protocol);
+        Pattern pattern = Pattern.compile("\\{.+?}");
+        Matcher matcher = pattern.matcher(url);
+        while (matcher.find()) {
+            String temp = matcher.group();
+            String dataKey = temp.replace("{", "").replace("}", "");
+            if (urlParamMap != null && urlParamMap.size() > 0) {
+                Object value = urlParamMap.get(dataKey);
+                if (value != null && !"".equals(value)) {
+                    url = url.replace(temp, String.valueOf(value));
                 }
             } else {
-                throw new IllegalArgumentException("config.yaml缺少protocol配置");
-            }
-
-            Pattern pattern = Pattern.compile("\\{.+?}");
-            Matcher matcher = pattern.matcher(url);
-            while (matcher.find()) {
-                String temp = matcher.group();
-                String dataKey = temp.replace("{", "").replace("}", "");
-                if (urlParamMap != null && urlParamMap.size() > 0) {
-                    Object value = urlParamMap.get(dataKey);
-                    if (value != null && !"".equals(value)) {
-                        url = url.replace(temp, String.valueOf(value));
-                    }
-                } else {
-                    Object obj = context.getAttribute("urlParam");
-                    if (obj != null) {
-                        url = url.replace(temp, String.valueOf(((Map<String, Object>) obj).get(dataKey)));
-                    }
+                Object obj = context.getAttribute("urlParam");
+                if (obj != null) {
+                    url = url.replace(temp, String.valueOf(((Map<String, Object>) obj).get(dataKey)));
                 }
-            }
-
-            if (isSign) {
-                url = CommonUtil.createRequestSignature(method, url, toQueryString(queryMap), requestBody,
-                        String.valueOf(entity.getHeader().get("Authorization")));
-            } else {
-                if (queryMap != null && queryMap.size() > 0) {
-                    url = url + "?" + toQueryString(queryMap);
-                }
-            }
-
-            if (isMock) {
-                MockClient mockClient = new MockClient();
-                Map mockClientConfig = (Map) Configuration.getConfig().get("mock-client");
-                String host = (String) mockClientConfig.get("host");
-                int port = (int) mockClientConfig.get("port");
-                mockServerClient = mockClient.start(host, port);
-                MockDTO mockDTO = entity.getMockDTO();
-                mockClient.doMock(mockServerClient, mockDTO.getMockRequest(), mockDTO.getMockResponse(),
-                        mockDTO.getMockForward());
-            }
-
-            switch (method.toUpperCase()) {
-                case "GET":
-                    response = sendHttpGet(url, header);
-                    break;
-                case "POST":
-                    response = sendHttpPost(url, requestBody, header);
-                    break;
-                case "PUT":
-                    response = sendHttpPut(url, requestBody, header);
-                    break;
-                case "DELETE":
-                    response = sendHttpDelete(url, requestBody, header);
-                    break;
-                case "PATCH":
-                    response = sendHttpPatch(url, requestBody, header);
-                    break;
-                default:
-                    Log.error(CLASS_NAME, "未定义的Method类型: \"{}\"", method);
-                    throw new IllegalArgumentException("未定义的Method类型: \"" + method + "\"");
-            }
-        } finally {
-            if (mockServerClient != null ) {
-                mockServerClient.close();
             }
         }
-        return response;
+
+        if (isSign) {
+            url = CommonUtil.createRequestSignature(method, url, toQueryString(queryMap), requestBody,
+                    String.valueOf(entity.getHeader().get("Authorization")));
+        } else {
+            if (queryMap != null && queryMap.size() > 0) {
+                url = url + "?" + toQueryString(queryMap);
+            }
+        }
+
+        switch (method.toUpperCase()) {
+            case "GET":
+                return sendHttpGet(url, header);
+            case "POST":
+                return sendHttpPost(url, requestBody, header);
+            case "PUT":
+                return sendHttpPut(url, requestBody, header);
+            case "DELETE":
+                return sendHttpDelete(url, requestBody, header);
+            case "PATCH":
+                return sendHttpPatch(url, requestBody, header);
+            default:
+                Log.error(CLASS_NAME, "未定义的Method类型: \"{}\"", method);
+                throw new IllegalArgumentException("未定义的Method类型: \"" + method + "\"");
+        }
     }
 
     private Response sendHttpGet(String httpUrl) {
