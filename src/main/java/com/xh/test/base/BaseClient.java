@@ -545,7 +545,7 @@ public class BaseClient {
                         }
                     }
                 } else if ("urlParamMap".equals(key) || "queryMap".equals(key) || "requestBody".equals(key) ||
-                            "assertion".equals(key) || "mockDTO".equals(key)) {
+                            "assertion".equals(key)) {
                     JSONObject partEntity = entityJSONObject.getJSONObject(key);
                     JSONObject partData = dataJSONObject.getJSONObject(key);
                     if (partEntity != null) {
