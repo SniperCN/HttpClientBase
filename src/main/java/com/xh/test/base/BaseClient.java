@@ -148,8 +148,14 @@ public class BaseClient {
                 Object value  = iTestContext.getAttribute(name);
                 contextJson.put(name, value);
             }
-            parameter("ITestContext<"+ entity.getDescription() + "> ", contextJson.toJSONString());
-            parameter("Entity<"+ entity.getDescription() + "> ", JSON.toJSONString(mergedEntity));
+            Log.debug(CLASS_NAME, "ITestContext<{}>: {}", mergedEntity.getDescription(), contextJson.toJSONString());
+            Log.debug(CLASS_NAME, "Entity<{}>: {}", mergedEntity.getDescription(), mergedEntity);
+            Log.debug(CLASS_NAME, "dataMap<{}>: {}", mergedEntity.getDescription(), JSON.toJSONString(dataMap));
+            Log.info(CLASS_NAME, "MergedEntity<{}>: {}", mergedEntity.getDescription(), JSON.toJSONString(mergedEntity));
+            parameter("ITestContext<"+ mergedEntity.getDescription() + "> ", contextJson.toJSONString());
+            parameter("Entity<"+ mergedEntity.getDescription() + "> ", JSON.toJSONString(entity));
+            parameter("Data<"+ mergedEntity.getDescription() + "> ", JSON.toJSONString(dataMap));
+            parameter("MergedEntity<"+ mergedEntity.getDescription() + "> ", JSON.toJSONString(mergedEntity));
             return BaseClient.getInstance().sendHttpRequest(iTestContext, mergedEntity);
         } else {
             Log.error(CLASS_NAME, "Entity不允许为null");
@@ -233,16 +239,9 @@ public class BaseClient {
         while (matcher.find()) {
             String temp = matcher.group();
             String dataKey = temp.replace("{", "").replace("}", "");
-            if (urlParamMap != null && urlParamMap.size() > 0) {
-                Object value = urlParamMap.get(dataKey);
-                if (value != null && !"".equals(value)) {
-                    url = url.replace(temp, String.valueOf(value));
-                }
-            } else {
-                Object obj = context.getAttribute("urlParam");
-                if (obj != null) {
-                    url = url.replace(temp, String.valueOf(((Map<String, Object>) obj).get(dataKey)));
-                }
+            Object value = urlParamMap.get(dataKey);
+            if (value != null) {
+                url = url.replace(temp, String.valueOf(value));
             }
         }
 
