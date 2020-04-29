@@ -1,7 +1,12 @@
 package com.xh.test.base;
 
 import com.alibaba.fastjson.*;
+import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.xh.test.model.Assertion;
 import com.xh.test.model.Entity;
+import com.xh.test.model.Response;
+import com.xh.test.model.ResponseDTO;
+import com.xh.test.utils.AssertionUtil;
 import com.xh.test.utils.FileUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.testng.ITestContext;
@@ -10,6 +15,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import java.lang.reflect.Method;
 import java.util.*;
+import static io.qameta.allure.Allure.parameter;
 
 /**
  * @ClassName BaseTest
@@ -38,11 +44,11 @@ public class BaseTest {
                 Log.info(CLASS_NAME, "Entity加载成功");
             } else {
                 Log.error(CLASS_NAME, "TestSuite<{}> Entity配置不允许为空", suiteName);
-                throw new IllegalArgumentException("TestSuite<" + suiteName + "> Entity配置不允许为空");
+                throw new NullPointerException("TestSuite<" + suiteName + "> Entity配置不允许为空");
             }
         } else {
             Log.error(CLASS_NAME, "entity-source-path配置不允许为空");
-            throw new IllegalArgumentException("entity-source-path配置不允许为空");
+            throw new NullPointerException("entity-source-path配置不允许为空");
         }
         //初始化dataProvider
         Map<String, Object> dataSourcePathMap = (Map<String, Object>) Configuration.getConfig().get("data-source-path");
@@ -54,11 +60,11 @@ public class BaseTest {
                 Log.info(CLASS_NAME, "Data加载成功");
             } else {
                 Log.error(CLASS_NAME, "TestSuite<{}> Data配置不允许为空", suiteName);
-                throw new IllegalArgumentException("TestSuite<" + suiteName + "> Data配置不允许为空");
+                throw new NullPointerException("TestSuite<" + suiteName + "> Data配置不允许为空");
             }
         } else {
             Log.error(CLASS_NAME, "data-source-path配置不允许为空");
-            throw new IllegalArgumentException("data-source-path配置不允许为空");
+            throw new NullPointerException("data-source-path配置不允许为空");
         }
         //初始化课堂配置
         Map<String, Object> classroomConfigMap = (Map<String, Object>) Configuration.getConfig().get("classroom-config");
@@ -188,18 +194,23 @@ public class BaseTest {
         if (dataMapObject != null) {
             Map<String, Object> dataMap = (Map<String, Object>) dataMapObject;
             Object data = dataMap.get(method.getName());
-            if (data instanceof Map) {
-                dataList.add(new Object[]{data});
-            } else if (data instanceof List) {
-                List<Map<String, Object>> list = (List<Map<String, Object>>) data;
-                list.forEach(map -> dataList.add(new Object[]{map}));
+            if (data != null) {
+                if (data instanceof Map) {
+                    dataList.add(new Object[]{data});
+                } else if (data instanceof List) {
+                    List<Map<String, Object>> list = (List<Map<String, Object>>) data;
+                    list.forEach(map -> dataList.add(new Object[]{map}));
+                } else {
+                    Log.error(CLASS_NAME, "data数据类型不允许为" + data.getClass());
+                    throw new IllegalArgumentException("data数据类型不允许为" + data.getClass());
+                }
             } else {
-                Log.error(CLASS_NAME, "data数据类型不允许为" + data.getClass());
-                throw new IllegalArgumentException("data数据类型不允许为" + data.getClass());
+                Log.error(CLASS_NAME, "测试方法对应的data为null");
+                throw new NullPointerException("测试方法对应的data为null,请检查data数据");
             }
         } else {
-            Log.error(CLASS_NAME, "data不允许为null");
-            throw new IllegalArgumentException("data不允许为null");
+            Log.error(CLASS_NAME, "测试类对应的data为null");
+            throw new NullPointerException("测试类对应的data为null,请检查data数据");
         }
         return dataList.iterator();
     }
@@ -217,16 +228,134 @@ public class BaseTest {
         if (dataMapObject != null) {
             Map<String, Object> dataMap = (Map<String, Object>) dataMapObject;
             Object data = dataMap.get(methodName);
-            if (data instanceof  Map) {
-                return (Map<String, Object>) data;
+            if (data != null) {
+                if (data instanceof  Map) {
+                    return (Map<String, Object>) data;
+                } else {
+                    Log.error(CLASS_NAME, "当前只允许Map类型数据,{}的数据类型为: {}", methodName, data.getClass());
+                    throw new IllegalArgumentException("data数据类型不允许为" + data.getClass());
+                }
             } else {
-                Log.error(CLASS_NAME, "当前只允许Map类型数据,{}的数据类型为: {}", methodName, data.getClass());
-                return null;
+                Log.error(CLASS_NAME, "测试方法对应的data为null");
+                throw new NullPointerException("测试方法对应的data为null,请检查data数据");
             }
         } else {
-            return null;
+            Log.error(CLASS_NAME, "测试类对应的data为null");
+            throw new NullPointerException("测试类对应的data为null,请检查data数据");
         }
     }
 
+    /**
+     * @description: 请求实体合并
+     * @param  iTestContext testNG iTestContext
+     * @param  entity       请求实体
+     * @param  dataMap      测试数据
+     * @return
+     * @author Sniper
+     * @throws
+     * @date 2020/4/27 15:17
+     */
+    protected Entity entityMerge(ITestContext iTestContext, Entity entity, Map<String, Object> dataMap) {
+        JSONObject contextJson = new JSONObject();
+        Set<String> attrName = iTestContext.getAttributeNames();
+        for (String name : attrName) {
+            Object value  = iTestContext.getAttribute(name);
+            contextJson.put(name, value);
+        }
+        Log.info(CLASS_NAME, "ITestContextAttribute: {}", contextJson.toJSONString());
+        Log.info(CLASS_NAME, "Entity: {}", JSON.toJSONString(entity));
+        Log.info(CLASS_NAME, "dataMap: {}", JSON.toJSONString(dataMap));
+        parameter("ITestContextAttribute: ", contextJson.toJSONString());
+        parameter("Entity: ", JSON.toJSONString(entity));
+        parameter("Data: ", JSON.toJSONString(dataMap));
+
+        JSONObject entityJSONObject = JSONObject.parseObject(JSONObject.toJSONString(entity,
+                SerializerFeature.WriteMapNullValue));
+        JSONObject dataJSONObject = dataMap == null ?
+                null : JSONObject.parseObject(JSONObject.toJSONString(dataMap));
+        if (dataJSONObject != null) {
+            Set<String> keySet = entityJSONObject.keySet();
+            for (String key : keySet) {
+                //根据userId获取user对应的header
+                if ("header".equals(key)) {
+                    JSONObject header = entityJSONObject.getJSONObject(key);
+                    Object headerKey = dataJSONObject.get("headerKey");
+                    if (headerKey != null) {
+                        Object userHeader = iTestContext.getAttribute(String.valueOf(headerKey));
+                        if (userHeader != null) {
+                            header.putAll((Map<String, Object>) userHeader);
+                        }
+                        Object dataHeader = dataJSONObject.get(key);
+                        if (dataHeader != null) {
+                            header.putAll((Map<String, Object>) dataHeader);
+                        }
+                    }
+                } else if ("urlParamMap".equals(key) || "queryMap".equals(key) || "requestBody".equals(key) ||
+                        "assertion".equals(key)) {
+                    JSONObject partEntity = entityJSONObject.getJSONObject(key);
+                    JSONObject partData = dataJSONObject.getJSONObject(key);
+                    if (partEntity != null) {
+                        Set<String> partEntityKeySet = partEntity.keySet();
+                        for (String partEntityKey : partEntityKeySet) {
+                            entityMerge(iTestContext, partEntity, partData, partEntityKey);
+                        }
+                    }
+                } else {
+                    entityMerge(iTestContext, entityJSONObject, dataJSONObject, key);
+                }
+            }
+        }
+
+        return JSON.toJavaObject(entityJSONObject, Entity.class);
+    }
+
+    /**
+     * @description: 实体字段值合并,优先数据,其次testNG iTestContext
+     * @param  iTestContext testNG iTestContext
+     * @param  entity   局部请求实体
+     * @param  data     局部测试数据
+     * @param  key      字段
+     * @return
+     * @author Sniper
+     * @throws
+     * @date 2020/4/27 15:13
+     */
+    private void entityMerge(ITestContext iTestContext, JSONObject entity, JSONObject data, String key) {
+        //合并iTestContext的entity字段值
+        Object iTestContextValue = iTestContext.getAttribute(key);
+        if (iTestContextValue != null) {
+            entity.put(key, iTestContextValue);
+        }
+        //合并dataMap的entity字段值
+        if (data !=null && data.containsKey(key)) {
+            Object dataValue = data.get(key);
+            entity.put(key, dataValue);
+        }
+    }
+
+    /**
+     * @description: 响应数据断言
+     * @param response            response实体
+     * @param entity              请求实体
+     * @param assertionHandlerMap 断言Map
+     * @return void
+     * @throws
+     * @author Sniper
+     * @date 2019/10/17 17:01
+     */
+    protected void assertThat(Response response, Entity entity, HashMap<String, AssertionHandler> assertionHandlerMap) {
+        Assertion assertion = entity.getAssertion();
+        AssertionUtil.assertThat("StatusCode校验", response.getStatusCode(),
+                assertion.getStatusCode());
+        AssertionUtil.assertThat("Message校验", response.getMessage(),
+                assertion.getMessage());
+        ResponseDTO responseDTO = response.getResponseDTO();
+        String action = assertion.getAction();
+        if (!StringUtils.isEmpty(action)) {
+            assertionHandlerMap.get(action).assertThat(responseDTO, entity);
+        } else {
+            AssertionUtil.assertThat(responseDTO, assertion);
+        }
+    }
 
 }
