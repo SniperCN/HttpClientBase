@@ -103,7 +103,7 @@ public class BaseTest {
      * @throws
      * @date 2020/4/27 15:30
      */
-    public static void loadData(List<String> dataSourcePathList) {
+    private void loadData(List<String> dataSourcePathList) {
         dataSourcePathList.forEach(dataSourcePath -> {
             Map<String, Object> temp = loadData(dataSourcePath);
             if (temp != null) {
@@ -120,7 +120,7 @@ public class BaseTest {
      * @throws
      * @date 2020/4/27 15:29
      */
-    public static Map<String, Object> loadData(String dataSourcePath) {
+    private Map<String, Object> loadData(String dataSourcePath) {
         try {
             if (!StringUtils.isEmpty(dataSourcePath)) {
                 String entitySourceData = FileUtil.read(dataSourcePath, "UTF-8");
