@@ -276,19 +276,28 @@ public class BaseTest {
         if (dataJSONObject != null) {
             Set<String> keySet = entityJSONObject.keySet();
             for (String key : keySet) {
-                //根据userId获取user对应的header
                 if ("header".equals(key)) {
                     JSONObject header = entityJSONObject.getJSONObject(key);
+                    //从配置文件根据serverType获取默认请求头
+                    Map<String, Object> defaultHeaderConfig = (Map<String, Object>) Configuration.getConfig().get("default-header");
+                    if (defaultHeaderConfig != null) {
+                        Map<String, Object> defaultHeader = (Map<String, Object>) defaultHeaderConfig.get(entity.getServerType());
+                        if (defaultHeader != null) {
+                            header.putAll(defaultHeader);
+                        }
+                    }
+                    //根据userId获取user对应的header
                     Object headerKey = dataJSONObject.get("headerKey");
                     if (headerKey != null) {
                         Object userHeader = iTestContext.getAttribute(String.valueOf(headerKey));
                         if (userHeader != null) {
                             header.putAll((Map<String, Object>) userHeader);
                         }
-                        Object dataHeader = dataJSONObject.get(key);
-                        if (dataHeader != null) {
-                            header.putAll((Map<String, Object>) dataHeader);
-                        }
+                    }
+                    //获取data数据中的请求头
+                    Object dataHeader = dataJSONObject.get(key);
+                    if (dataHeader != null) {
+                        header.putAll((Map<String, Object>) dataHeader);
                     }
                 } else if ("urlParamMap".equals(key) || "queryMap".equals(key) || "requestBody".equals(key) ||
                         "assertion".equals(key)) {
