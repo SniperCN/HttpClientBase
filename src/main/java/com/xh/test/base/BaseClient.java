@@ -238,7 +238,7 @@ public class BaseClient {
         return sendHttpRequest(httpDelete, new HashMap<>());
     }
 
-    public Response sendHttpDelete(String httpUrl, Map<String, Object> header) {
+    private Response sendHttpDelete(String httpUrl, Map<String, Object> header) {
         HttpDelete httpDelete = new HttpDelete(httpUrl);
         return sendHttpRequest(httpDelete, header);
     }
@@ -351,7 +351,7 @@ public class BaseClient {
         return response;
     }
 
-    public void download(String httpUrl, String savePath) {
+    private void download(String httpUrl, String savePath) {
         CloseableHttpClient httpClient = null;
         CloseableHttpResponse response = null;
         try {
