@@ -338,7 +338,9 @@ public class BaseTest {
         //合并dataMap的entity字段值
         if (data !=null && data.containsKey(key)) {
             Object dataValue = data.get(key);
-            entity.put(key, dataValue);
+            if (dataValue != null) {
+                entity.put(key, dataValue);
+            }
         }
     }
 
