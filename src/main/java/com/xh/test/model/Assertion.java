@@ -4,6 +4,7 @@ import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @ClassName Assertion
@@ -18,8 +19,8 @@ public class Assertion implements Serializable {
     private int statusCode;
     private String message;
     private ResponseDTO responseDTO;
-    private String jsonPath;
-    private List<String> includeKeys;
+    private List<String> jsonPathList;
+    private Map<String, List<String>> includeKeyMap;
     @JSONField(name = "isSort")
     private boolean isSort;
 }

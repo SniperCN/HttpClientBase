@@ -28,15 +28,21 @@ public class AssertionUtil {
     public static void assertThat(Object actual, Assertion assertion) {
         Object exceptDTO = assertion.getResponseDTO();
         Object actualDTO = actual;
-        String jsonPath = assertion.getJsonPath();
-        List<String> keys = assertion.getIncludeKeys();
         boolean isSort = assertion.isSort();
-        if (!StringUtils.isEmpty(jsonPath)) {
-            exceptDTO = JSONPath.eval(exceptDTO, jsonPath);
-            actualDTO = JSONPath.eval(actualDTO, jsonPath);
-        }
-        if (keys.size() > 0) {
-            assertThat(actualDTO, exceptDTO, keys, isSort);
+        List<String> jsonPathList = assertion.getJsonPathList();
+        if (jsonPathList != null && jsonPathList.size() > 0) {
+            for (String jsonPath : jsonPathList) {
+                if (!StringUtils.isEmpty(jsonPath)) {
+                    exceptDTO = JSONPath.eval(exceptDTO, jsonPath);
+                    actualDTO = JSONPath.eval(actualDTO, jsonPath);
+                    List<String> keys = assertion.getIncludeKeyMap().get(jsonPath);
+                    if (keys != null && keys.size() > 0) {
+                        assertThat(actualDTO, exceptDTO, keys, isSort);
+                    } else {
+                        assertThat(actualDTO, exceptDTO, isSort);
+                    }
+                }
+            }
         } else {
             assertThat(actualDTO, exceptDTO, isSort);
         }
