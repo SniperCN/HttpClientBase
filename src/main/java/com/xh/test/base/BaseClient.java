@@ -351,7 +351,7 @@ public class BaseClient {
         return response;
     }
 
-    private void download(String httpUrl, String savePath) {
+    public void download(String httpUrl, String savePath) {
         CloseableHttpClient httpClient = null;
         CloseableHttpResponse response = null;
         try {
