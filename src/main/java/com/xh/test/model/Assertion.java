@@ -3,8 +3,8 @@ package com.xh.test.model;
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 import java.io.Serializable;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @ClassName Assertion
@@ -19,8 +19,9 @@ public class Assertion implements Serializable {
     private int statusCode;
     private String message;
     private ResponseDTO responseDTO;
-    private List<String> jsonPathList;
-    private Map<String, List<String>> includeKeyMap;
+    private Set<String> jsonPathList;
+    private Map<String, Set<String>> includeKeyMap;
+    private Map<String, Set<String>> excludeKeyMap;
     @JSONField(name = "isSort")
     private boolean isSort;
 }

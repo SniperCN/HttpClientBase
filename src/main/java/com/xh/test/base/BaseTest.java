@@ -272,7 +272,7 @@ public class BaseTest {
         JSONObject entityJSONObject = JSONObject.parseObject(JSONObject.toJSONString(entity,
                 SerializerFeature.WriteMapNullValue));
         JSONObject dataJSONObject = dataMap == null ?
-                null : JSONObject.parseObject(JSONObject.toJSONString(dataMap));
+                null : JSONObject.parseObject(JSONObject.toJSONString(dataMap, SerializerFeature.WriteMapNullValue));
         if (dataJSONObject != null) {
             Set<String> keySet = entityJSONObject.keySet();
             for (String key : keySet) {
