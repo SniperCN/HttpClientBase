@@ -15,10 +15,10 @@ public class ResponseDTO implements Serializable {
     private static final long serialVersionUID = 8506232713902130149L;
     private int code;
     private String msg;
-    private Map<String, Object> data;
+    private Object data;
     private String desc;
 
-    public ResponseDTO(int code, String msg, Map<String, Object> data, String desc) {
+    public ResponseDTO(int code, String msg, Object data, String desc) {
         this.code = code;
         this.msg = msg;
         this.data = data;
