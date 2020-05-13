@@ -314,7 +314,7 @@ public class BaseClient {
                     bodyInfo = EntityUtils.toString(httpEntity);
                 }
                 Request request = new Request(httpRequest.getRequestLine().getUri(), httpRequest.getMethod(),
-                        parseHeader(httpRequest.getAllHeaders()), JSON.toJavaObject(JSON.parseObject(bodyInfo), Map.class));
+                        parseHeader(httpRequest.getAllHeaders()), JSON.parseObject(bodyInfo, Map.class));
                 Log.info(CLASS_NAME, "请求信息: {}", JSON.toJSONString(request, SerializerFeature.WriteMapNullValue));
                 httpResponse = httpClient.execute(httpRequest);
                 String responseData = EntityUtils.toString(httpResponse.getEntity());
