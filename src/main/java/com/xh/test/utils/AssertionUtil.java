@@ -1,8 +1,10 @@
 package com.xh.test.utils;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.JSONPath;
+import com.xh.test.base.Log;
 import com.xh.test.model.Assertion;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
@@ -16,6 +18,7 @@ import java.util.Set;
  * @Date 2019/4/18 17:10
  */
 public class AssertionUtil {
+    private static final String CLASS_NAME = AssertionUtil.class.getName();
 
     /**
      * @Description:        通用断言方法
@@ -32,7 +35,7 @@ public class AssertionUtil {
         Set<String> jsonPathList = assertion.getJsonPathList();
         if (jsonPathList != null && jsonPathList.size() > 0) {
             for (String jsonPath : jsonPathList) {
-                System.out.println(jsonPath);
+                Log.info(CLASS_NAME, "当前断言jsonPath:{}", jsonPath);
                 if (!StringUtils.isEmpty(jsonPath)) {
                     Object partExceptDTO = JSONPath.eval(exceptDTO, jsonPath);
                     Object partActualDTO = JSONPath.eval(actualDTO, jsonPath);
@@ -42,12 +45,16 @@ public class AssertionUtil {
                         //断言指定字段
                         Set<String> includeKeys = assertion.getIncludeKeyMap().get(jsonPath);
                         if (includeKeys != null && includeKeys.size() > 0) {
+                            Log.info(CLASS_NAME, "当前指定字段:{}",
+                                    JSON.toJSONString(includeKeys));
                             assertThat(partActualDTO, partExceptDTO, includeKeys, isSort);
                         }
                     } else if (excludeMap != null) {
                         //断言排除指定字段
                         Set<String> excludeKeys = assertion.getExcludeKeyMap().get(jsonPath);
                         if (excludeKeys != null && excludeKeys.size() > 0) {
+                            Log.info(CLASS_NAME, "当前排除字段:{}",
+                                    JSON.toJSONString(excludeKeys));
                             assertThat(partActualDTO, partExceptDTO, isSort, excludeKeys);
                         }
                     } else {
@@ -75,8 +82,10 @@ public class AssertionUtil {
         if (actual instanceof JSONObject && except instanceof JSONObject) {
             AssertionUtil.assertThat("字段个数校验", ((JSONObject) actual).keySet().size(),
                     ((JSONObject) except).keySet().size());
-            includeKeys.forEach(key -> assertThat(((JSONObject) actual).get(key),
-                    ((JSONObject) except).get(key), isSort));
+            includeKeys.forEach(key -> {
+                Log.info(CLASS_NAME, "指定字段断言,key={}", key);
+                assertThat(((JSONObject) actual).get(key), ((JSONObject) except).get(key), isSort);
+            });
         }else if (actual instanceof JSONArray && except instanceof JSONArray) {
             JSONArray actualArray = (JSONArray) actual;
             JSONArray exceptArray = (JSONArray) except;
@@ -114,6 +123,7 @@ public class AssertionUtil {
             Set<String> keys = ((JSONObject) except).keySet();
             keys.forEach(key -> {
                 if (!excludeKeys.contains(key)) {
+                    Log.info(CLASS_NAME, "指定字段断言,key={}", key);
                     assertThat(((JSONObject) actual).get(key), ((JSONObject) except).get(key), isSort);
                 }
             });
@@ -149,8 +159,11 @@ public class AssertionUtil {
      */
     public static void assertThat(Object actual, Object except, boolean isSort) {
         if (actual instanceof JSONObject && except instanceof JSONObject) {
-            ((JSONObject) actual).forEach((key, value) -> assertThat(value, ((JSONObject) except).get(key), isSort));
-        }else if (actual instanceof JSONArray && except instanceof JSONArray) {
+            ((JSONObject) actual).forEach((key, value) -> {
+                Log.info(CLASS_NAME, "全量字段断言,key={}", key);
+                assertThat(value, ((JSONObject) except).get(key), isSort);
+            });
+        } else if (actual instanceof JSONArray && except instanceof JSONArray) {
             JSONArray actualArray = (JSONArray) actual;
             JSONArray exceptArray = (JSONArray) except;
             assertThat("数据条数校验", actualArray.size(), exceptArray.size());
