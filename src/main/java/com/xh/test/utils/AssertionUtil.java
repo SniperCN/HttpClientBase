@@ -92,11 +92,16 @@ public class AssertionUtil {
             AssertionUtil.assertThat("数据条数校验", actualArray.size(), exceptArray.size());
             if (isSort) {
                 for (int i = 0; i < exceptArray.size(); i++) {
+                    Log.info(CLASS_NAME, "数组遍历断言,当前index:{},实际数据:{}",
+                            JSON.toJSONString(actualArray.get(i)));
                     assertThat(actualArray.get(i), exceptArray.get(i), includeKeys, true);
                 }
             } else {
                 actualArray.forEach(obj -> {
+                    Log.info(CLASS_NAME, "数组遍历断言,当前实际数据:{}", JSON.toJSONString(obj));
                     int index = exceptArray.indexOf(obj);
+                    assertThat("预期数组中对象index校验", index > -1,
+                            "预期对象不存在");
                     assertThat(obj, exceptArray.get(index), includeKeys, false);
                 });
             }
@@ -134,11 +139,16 @@ public class AssertionUtil {
             AssertionUtil.assertThat("数据条数校验", actualArray.size(), exceptArray.size());
             if (isSort) {
                 for (int i = 0; i < exceptArray.size(); i++) {
+                    Log.info(CLASS_NAME, "数组遍历断言,当前index:{},实际数据:{}",
+                            JSON.toJSONString(actualArray.get(i)));
                     assertThat(actualArray.get(i), exceptArray.get(i), true, excludeKeys);
                 }
             } else {
                 actualArray.forEach(obj -> {
+                    Log.info(CLASS_NAME, "数组遍历断言,当前实际数据:{}", JSON.toJSONString(obj));
                     int index = exceptArray.indexOf(obj);
+                    assertThat("预期数组中对象index校验", index > -1,
+                            "预期对象不存在");
                     assertThat(obj, exceptArray.get(index), false, excludeKeys);
                 });
             }
@@ -208,10 +218,10 @@ public class AssertionUtil {
      * @author Sniper
      * @date 2019/5/14 19:23
      */
-    public static void assertThat(String description, boolean condition) {
+    public static void assertThat(String description, boolean condition, String errorMessage) {
         Assertions.assertThat(condition)
                 .as(description)
-                .withFailMessage("False")
+                .withFailMessage(errorMessage)
                 .isTrue();
     }
 
