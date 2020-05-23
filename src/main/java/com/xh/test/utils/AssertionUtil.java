@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.JSONPath;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.xh.test.base.Log;
 import com.xh.test.model.Assertion;
 import org.apache.commons.lang3.StringUtils;
@@ -80,11 +81,16 @@ public class AssertionUtil {
      */
     public static void assertThat(Object actual, Object except, Set<String> includeKeys, boolean isSort) {
         if (actual instanceof JSONObject && except instanceof JSONObject) {
-            AssertionUtil.assertThat("字段个数校验", ((JSONObject) actual).keySet().size(),
-                    ((JSONObject) except).keySet().size());
+            JSONObject actualObject = (JSONObject) actual;
+            JSONObject exceptObject = (JSONObject) except;
+            Log.info(CLASS_NAME, "数据断言,{\"actual\":{},\"except\":{}}",
+                    JSON.toJSONString(actualObject, SerializerFeature.WriteMapNullValue),
+                    JSON.toJSONString(exceptObject, SerializerFeature.WriteMapNullValue));
+            AssertionUtil.assertThat("字段个数校验", actualObject.keySet().size(),
+                    exceptObject.keySet().size());
             includeKeys.forEach(key -> {
                 Log.info(CLASS_NAME, "指定字段断言,key={}", key);
-                assertThat(((JSONObject) actual).get(key), ((JSONObject) except).get(key), isSort);
+                assertThat(actualObject.get(key), exceptObject.get(key), isSort);
             });
         }else if (actual instanceof JSONArray && except instanceof JSONArray) {
             JSONArray actualArray = (JSONArray) actual;
@@ -123,13 +129,20 @@ public class AssertionUtil {
      */
     public static void assertThat(Object actual, Object except, boolean isSort, Set<String> excludeKeys) {
         if (actual instanceof JSONObject && except instanceof JSONObject) {
-            AssertionUtil.assertThat("字段个数校验", ((JSONObject) actual).keySet().size(),
-                    ((JSONObject) except).keySet().size());
+            JSONObject actualObject = (JSONObject) actual;
+            JSONObject exceptObject = (JSONObject) except;
+            Log.info(CLASS_NAME, "数据断言,{\"actual\":{},\"except\":{}}",
+                    JSON.toJSONString(actualObject, SerializerFeature.WriteMapNullValue),
+                    JSON.toJSONString(exceptObject, SerializerFeature.WriteMapNullValue));
+            AssertionUtil.assertThat("字段个数校验", actualObject.keySet().size(),
+                    exceptObject.size());
             Set<String> keys = ((JSONObject) except).keySet();
             keys.forEach(key -> {
                 if (!excludeKeys.contains(key)) {
-                    Log.info(CLASS_NAME, "指定字段断言,key={}", key);
-                    assertThat(((JSONObject) actual).get(key), ((JSONObject) except).get(key), isSort);
+                    Log.info(CLASS_NAME, "非排除字段断言,key={}", key);
+                    assertThat(actualObject.get(key), exceptObject.get(key), isSort);
+                } else {
+                    Log.info(CLASS_NAME, "排除断言字段,key={}", key);
                 }
             });
 
@@ -144,6 +157,7 @@ public class AssertionUtil {
                     assertThat(actualArray.get(i), exceptArray.get(i), true, excludeKeys);
                 }
             } else {
+                excludeKeys.forEach(key -> setValue(key, exceptArray, actualArray));
                 actualArray.forEach(obj -> {
                     Log.info(CLASS_NAME, "数组遍历断言,当前实际数据:{}", JSON.toJSONString(obj));
                     int index = exceptArray.indexOf(obj);
@@ -223,6 +237,12 @@ public class AssertionUtil {
                 .as(description)
                 .withFailMessage(errorMessage)
                 .isTrue();
+    }
+
+    private static void setValue(String key, Object ... rootObjects) {
+        for (Object rootObject : rootObjects) {
+            JSONPath.set(rootObject, "$." + key, "EXCLUDE_KEY");
+        }
     }
 
 }
