@@ -1,12 +1,14 @@
 package com.xh.test.base;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.xh.test.model.*;
 import com.xh.test.utils.CommonUtil;
 import com.xh.test.utils.FileUtil;
+import io.qameta.allure.Allure;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -316,24 +318,14 @@ public class BaseClient {
                 Request request = new Request(httpRequest.getRequestLine().getUri(), httpRequest.getMethod(),
                         parseHeader(httpRequest.getAllHeaders()), JSON.parseObject(bodyInfo, Map.class));
                 Log.info(CLASS_NAME, "请求信息: {}", JSON.toJSONString(request, SerializerFeature.WriteMapNullValue));
+                Allure.addAttachment("请求信息", JSON.toJSONString(request, SerializerFeature.WriteMapNullValue));
                 httpResponse = httpClient.execute(httpRequest);
                 String responseData = EntityUtils.toString(httpResponse.getEntity());
-                ResponseDTO responseDTO;
-                if (responseData.startsWith("{") && responseData.endsWith("}")) {
-                    if (responseData.contains("\"code\"") && responseData.contains("\"msg\"") &&
-                            responseData.contains("\"data\"") && responseData.contains("\"desc\"")) {
-                        responseDTO = JSON.parseObject(responseData, ResponseDTO.class);
-                    } else {
-                        responseDTO = new ResponseDTO(0, "", JSONObject.parseObject(responseData), "");
-                    }
-                } else {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("data", responseData);
-                    responseDTO = new ResponseDTO(0, "", map, "");
-                }
+                ResponseDTO responseDTO = parseResponse(responseData);
                 response = new Response(httpResponse.getStatusLine().getStatusCode(), httpResponse.getStatusLine().getReasonPhrase(),
                         parseHeader(httpResponse.getAllHeaders()), false, responseDTO);
                 Log.info(CLASS_NAME, "响应信息: {}", JSON.toJSONString(response, SerializerFeature.WriteMapNullValue));
+                Allure.addAttachment("响应信息", JSON.toJSONString(response, SerializerFeature.WriteMapNullValue));
             } finally {
                 if (httpResponse != null) {
                     httpResponse.close();
@@ -463,6 +455,46 @@ public class BaseClient {
         int lastIndex = stringBuilder.lastIndexOf("&");
         stringBuilder.replace(lastIndex, lastIndex + 1, "");
         return stringBuilder.toString();
+    }
+
+    private boolean isJSONObject (String responseData) {
+        try {
+            JSONObject.parseObject(responseData);
+            return true;
+        } catch (JSONException e) {
+            return false;
+        }
+    }
+
+    private boolean isJSONArray (String responseData) {
+        try {
+            JSONObject.parseArray(responseData);
+            return true;
+        } catch (JSONException e) {
+            return false;
+        }
+    }
+
+    private ResponseDTO parseResponse(String responseData) {
+        if (isJSONObject(responseData)) {
+            JSONObject responseJSONObject = JSONObject.parseObject(responseData);
+            if (responseJSONObject.keySet().size() == 4 &&
+                responseJSONObject.containsKey("code") &&
+                responseJSONObject.containsKey("msg") &&
+                responseJSONObject.containsKey("desc") &&
+                responseJSONObject.containsKey("data")
+            ) {
+                return JSON.parseObject(responseData, ResponseDTO.class);
+            } else {
+                return new ResponseDTO(0, "", JSONObject.parseObject(responseData), "");
+            }
+        } else if (isJSONArray(responseData)) {
+            return new ResponseDTO(0, "", JSONArray.parseArray(responseData), "");
+        } else {
+            Map<String, Object> map = new HashMap<>();
+            map.put("data", responseData);
+            return new ResponseDTO(0, "", map, "");
+        }
     }
 
 }

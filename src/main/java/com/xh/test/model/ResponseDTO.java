@@ -6,7 +6,7 @@ import java.util.Map;
 
 /**
  * @ClassName ResponseDTO
- * @Description: TODO
+ * @Description: 响应数据DTO
  * @Author Sniper
  * @Date 2019/10/31 11:16
  */

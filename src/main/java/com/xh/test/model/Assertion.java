@@ -8,7 +8,7 @@ import java.util.Set;
 
 /**
  * @ClassName Assertion
- * @Description: TODO
+ * @Description: 断言实体
  * @Author Sniper
  * @Date 2020/4/19 22:10
  */

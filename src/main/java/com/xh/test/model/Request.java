@@ -6,7 +6,7 @@ import java.util.Map;
 
 /**
  * @ClassName Request
- * @Description: TODO
+ * @Description: 请求核心数据实体
  * @Author Sniper
  * @Date 2019/10/31 13:32
  */
