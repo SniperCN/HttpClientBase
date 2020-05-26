@@ -491,9 +491,7 @@ public class BaseClient {
         } else if (isJSONArray(responseData)) {
             return new ResponseDTO(0, "", JSONArray.parseArray(responseData), "");
         } else {
-            Map<String, Object> map = new HashMap<>();
-            map.put("data", responseData);
-            return new ResponseDTO(0, "", map, "");
+            return new ResponseDTO(0, "", responseData, "");
         }
     }
 
