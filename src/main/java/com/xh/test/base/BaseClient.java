@@ -175,7 +175,7 @@ public class BaseClient {
         }
 
         Log.info(CLASS_NAME, "TargetEntity<{}>: {}", entity.getDescription(), JSON.toJSONString(entity));
-        parameter("TargetEntity<"+ entity.getDescription() + "> ", JSON.toJSONString(entity));
+        Allure.addAttachment("TargetEntity<"+ entity.getDescription() + "> ", JSON.toJSONString(entity));
 
         switch (method.toUpperCase()) {
             case "GET":

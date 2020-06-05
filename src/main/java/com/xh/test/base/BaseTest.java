@@ -8,6 +8,7 @@ import com.xh.test.model.Response;
 import com.xh.test.model.ResponseDTO;
 import com.xh.test.utils.AssertionUtil;
 import com.xh.test.utils.FileUtil;
+import io.qameta.allure.Allure;
 import org.apache.commons.lang3.StringUtils;
 import org.testng.ITestContext;
 import org.testng.annotations.AfterClass;
@@ -262,13 +263,14 @@ public class BaseTest {
             Object value  = iTestContext.getAttribute(name);
             contextJson.put(name, value);
         }
-        Log.info(CLASS_NAME, "ITestContextAttribute: {}", contextJson.toJSONString());
-        Log.info(CLASS_NAME, "Entity: {}", JSON.toJSONString(entity));
-        Log.info(CLASS_NAME, "dataMap: {}", JSON.toJSONString(dataMap));
-        parameter("ITestContextAttribute: ", contextJson.toJSONString());
-        parameter("Entity: ", JSON.toJSONString(entity));
-        parameter("Data: ", JSON.toJSONString(dataMap));
-
+        String description = dataMap.get("description") !=null ?
+                String.valueOf(dataMap.get("description")) : entity.getDescription();
+        Log.info(CLASS_NAME, "ITestContextAttribute<{}> {}", description , contextJson.toJSONString());
+        Log.info(CLASS_NAME, "Entity<{}> {}", description, JSON.toJSONString(entity));
+        Log.info(CLASS_NAME, "dataMap<{}> {}", description, JSON.toJSONString(dataMap));
+        Allure.addAttachment("ITestContextAttribute<" + description + ">" , contextJson.toJSONString());
+        Allure.addAttachment("Entity<" + description + ">", JSON.toJSONString(entity));
+        Allure.addAttachment("Data<" + description + ">", JSON.toJSONString(dataMap));
         JSONObject entityJSONObject = JSONObject.parseObject(JSONObject.toJSONString(entity,
                 SerializerFeature.WriteMapNullValue));
         JSONObject dataJSONObject = dataMap == null ?
